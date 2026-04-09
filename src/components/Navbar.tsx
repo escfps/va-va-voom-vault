@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X as XIcon, User, LogIn, UserCheck, Heart, LogOut } from "lucide-react";
+import { useFavorites } from "@/hooks/useFavorites";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ const Navbar = () => {
   const [showSignup, setShowSignup] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { favoriteIds } = useFavorites();
 
   const handleSignOut = async () => {
     await signOut();
@@ -39,6 +41,18 @@ const Navbar = () => {
             </Link>
 
             <div className="hidden md:flex items-center gap-4">
+              {user && (
+                <Link to="/favoritos" className="relative">
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <Heart className="h-5 w-5" />
+                    {favoriteIds.length > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                        {favoriteIds.length}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+              )}
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
