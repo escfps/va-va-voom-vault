@@ -9,6 +9,7 @@ import {
   ArrowLeft, MapPin, Star, CheckCircle, MessageCircle, Heart, Flag,
   Ruler, Weight, Eye, Scissors, Languages, Home, Users, Clock, Camera,
   User, MessageSquare, ChevronDown, ChevronUp, ShieldCheck, Video,
+  DollarSign, Banknote, CreditCard, Smartphone,
 } from "lucide-react";
 
 const ProfileDetail = () => {
