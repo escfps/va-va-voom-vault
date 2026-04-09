@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { MapPin, Star, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import FavoriteButton from "@/components/FavoriteButton";
 
 interface ProfileCardProps {
   id: string;
@@ -37,6 +38,9 @@ const ProfileCard = ({
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
+        <div className="absolute top-3 right-3 z-10">
+          <FavoriteButton profileId={id} />
+        </div>
         {verified && (
           <div className="absolute top-3 left-3">
             <Badge className="bg-primary text-primary-foreground gap-1 text-xs">
