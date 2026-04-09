@@ -1,3 +1,15 @@
+export interface ServiceItem {
+  name: string;
+  does: boolean;
+  description: string;
+}
+
+export interface Review {
+  rating: number;
+  text: string;
+  timeAgo: string;
+}
+
 export interface Profile {
   id: string;
   name: string;
@@ -11,6 +23,7 @@ export interface Profile {
   price: number;
   priceDuration: string;
   verified: boolean;
+  verifiedDate?: string;
   rating: number;
   reviewCount: number;
   tags: string[];
@@ -29,15 +42,37 @@ export interface Profile {
   location: string;
   hasOwnPlace: boolean;
   attendsTo: string;
+  maxClients: string;
+  detailedServices: ServiceItem[];
   services: string[];
   reviews: Review[];
 }
 
-export interface Review {
-  rating: number;
-  text: string;
-  timeAgo: string;
-}
+const defaultServices: ServiceItem[] = [
+  { name: "Sexo oral sem preservativo", does: true, description: "Realiza sexo oral sem preservativo." },
+  { name: "Sexo vaginal com preservativo", does: true, description: "Faz penetração vaginal com preservativo." },
+  { name: "Masturbação", does: true, description: "Realiza masturbação." },
+  { name: "Massagem tradicional", does: true, description: "Realiza massagem relaxante." },
+  { name: "Dominação", does: false, description: "Conjunto de comportamentos que envolvem submissão e dominação." },
+  { name: "Penetração com acessórios", does: false, description: "Faz penetração com acessórios sexuais." },
+  { name: "Beijo grego", does: false, description: "Carícias no ânus com a boca." },
+  { name: "Podolatria", does: false, description: "Fetiche envolvendo pés." },
+  { name: "Chuva dourada", does: false, description: "Prática de urofilia." },
+  { name: "Acompanhante", does: true, description: "Acompanha em jantares, eventos e viagens." },
+];
+
+const servicesSet1: ServiceItem[] = [
+  { name: "Sexo oral sem preservativo", does: true, description: "Realiza sexo oral sem preservativo." },
+  { name: "Sexo vaginal com preservativo", does: true, description: "Faz penetração vaginal com preservativo." },
+  { name: "Masturbação", does: true, description: "Realiza masturbação." },
+  { name: "Massagem tradicional", does: true, description: "Realiza massagem relaxante." },
+  { name: "Dominação", does: true, description: "Conjunto de comportamentos que envolvem submissão e dominação." },
+  { name: "Penetração com acessórios", does: true, description: "Faz penetração com acessórios sexuais." },
+  { name: "Beijo grego", does: true, description: "Carícias no ânus com a boca." },
+  { name: "Podolatria", does: true, description: "Fetiche envolvendo pés." },
+  { name: "Chuva dourada", does: false, description: "Prática de urofilia." },
+  { name: "Acompanhante", does: true, description: "Acompanha em jantares, eventos e viagens." },
+];
 
 export const mockProfiles: Profile[] = [
   {
