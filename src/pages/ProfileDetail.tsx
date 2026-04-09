@@ -9,6 +9,7 @@ import {
   ArrowLeft, MapPin, Star, CheckCircle, MessageCircle, Heart, Flag,
   Ruler, Weight, Eye, Scissors, Languages, Home, Users, Clock, Camera,
   User, MessageSquare, ChevronDown, ChevronUp, ShieldCheck, Video,
+  DollarSign, Banknote, CreditCard, Smartphone,
 } from "lucide-react";
 
 const ProfileDetail = () => {
@@ -284,7 +285,46 @@ const ProfileDetail = () => {
                   </div>
                 </div>
 
-                {/* Services offered - Fatal Model style */}
+                {/* Pricing Table - Fatal Model style */}
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <DollarSign className="h-5 w-5" /> Valores
+                  </h2>
+                  <div className="grid grid-cols-2 gap-0">
+                    {profile.pricing.map((item) => (
+                      <div key={item.duration} className="flex items-center justify-between border-b border-border py-3 px-2">
+                        <span className="text-sm italic text-muted-foreground">{item.duration}</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {item.price !== null
+                            ? `R$ ${item.price.toLocaleString("pt-BR")}`
+                            : "Não realiza"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Payment methods */}
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-muted-foreground mb-3">Formas de pagamento:</p>
+                    <div className="flex items-center justify-center gap-6">
+                      {profile.paymentMethods.map((method) => {
+                        const icons: Record<string, typeof Banknote> = {
+                          "Dinheiro": Banknote,
+                          "PIX": Smartphone,
+                          "Cartão de crédito": CreditCard,
+                        };
+                        const Icon = icons[method] || DollarSign;
+                        return (
+                          <div key={method} className="flex flex-col items-center gap-1">
+                            <Icon className="h-6 w-6 text-foreground" />
+                            <span className="text-xs text-muted-foreground uppercase font-medium">{method}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     <h2 className="text-lg font-semibold text-foreground italic">Serviços oferecidos</h2>

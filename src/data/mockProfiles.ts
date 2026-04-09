@@ -4,6 +4,11 @@ export interface ServiceItem {
   description: string;
 }
 
+export interface PriceItem {
+  duration: string;
+  price: number | null; // null = "Não realiza"
+}
+
 export interface Review {
   rating: number;
   text: string;
@@ -50,6 +55,8 @@ export interface Profile {
   hasOwnPlace: boolean;
   attendsTo: string;
   maxClients: string;
+  pricing: PriceItem[];
+  paymentMethods: string[];
   detailedServices: ServiceItem[];
   services: string[];
   reviews: Review[];
@@ -148,6 +155,17 @@ export const mockProfiles: Profile[] = [
     attendsTo: "Homens e mulheres",
     maxClients: "apenas 1 cliente",
     verifiedDate: "Mar/2026",
+    pricing: [
+      { duration: "30 minutos", price: 150 },
+      { duration: "1 hora", price: 300 },
+      { duration: "15 minutos", price: null },
+      { duration: "2 horas", price: null },
+      { duration: "4 horas", price: null },
+      { duration: "Pernoite", price: null },
+      { duration: "Diária", price: null },
+      { duration: "Diária de viagem", price: null },
+    ],
+    paymentMethods: ["Dinheiro", "PIX"],
     detailedServices: servicesSet1,
     services: ["Massagem relaxante", "Jantar acompanhado", "Ensaio fotográfico", "Conteúdo exclusivo", "Videochamada"],
     reviews: [
@@ -199,6 +217,17 @@ export const mockProfiles: Profile[] = [
     attendsTo: "Homens",
     maxClients: "apenas 1 cliente",
     verifiedDate: "Fev/2026",
+    pricing: [
+      { duration: "30 minutos", price: 200 },
+      { duration: "1 hora", price: 400 },
+      { duration: "2 horas", price: 700 },
+      { duration: "15 minutos", price: null },
+      { duration: "4 horas", price: null },
+      { duration: "Pernoite", price: 2000 },
+      { duration: "Diária", price: null },
+      { duration: "Diária de viagem", price: null },
+    ],
+    paymentMethods: ["Dinheiro", "PIX", "Cartão de crédito"],
     detailedServices: defaultServices,
     services: ["Massagem relaxante", "Jantar acompanhado", "Conteúdo exclusivo", "Viagens"],
     reviews: [
@@ -249,6 +278,17 @@ export const mockProfiles: Profile[] = [
     attendsTo: "Homens",
     maxClients: "apenas 1 cliente",
     verifiedDate: "Fev/2026",
+    pricing: [
+      { duration: "30 minutos", price: 150 },
+      { duration: "1 hora", price: 300 },
+      { duration: "15 minutos", price: null },
+      { duration: "2 horas", price: null },
+      { duration: "4 horas", price: null },
+      { duration: "Pernoite", price: null },
+      { duration: "Diária", price: null },
+      { duration: "Diária de viagem", price: null },
+    ],
+    paymentMethods: ["Dinheiro", "PIX"],
     detailedServices: defaultServices,
     services: ["Massagem relaxante", "Conteúdo exclusivo", "Videochamada"],
     reviews: [
@@ -298,6 +338,17 @@ export const mockProfiles: Profile[] = [
     attendsTo: "Homens e casais",
     maxClients: "até 2 clientes",
     verifiedDate: "Jan/2026",
+    pricing: [
+      { duration: "30 minutos", price: 200 },
+      { duration: "1 hora", price: 400 },
+      { duration: "2 horas", price: 700 },
+      { duration: "15 minutos", price: null },
+      { duration: "4 horas", price: null },
+      { duration: "Pernoite", price: 2000 },
+      { duration: "Diária", price: null },
+      { duration: "Diária de viagem", price: null },
+    ],
+    paymentMethods: ["Dinheiro", "PIX", "Cartão de crédito"],
     detailedServices: servicesSet1,
     services: ["Conteúdo exclusivo", "Vídeos personalizados", "Videochamada"],
     reviews: [
@@ -347,6 +398,17 @@ export const mockProfiles: Profile[] = [
     attendsTo: "Homens",
     maxClients: "apenas 1 cliente",
     verifiedDate: "Fev/2026",
+    pricing: [
+      { duration: "30 minutos", price: 150 },
+      { duration: "1 hora", price: 300 },
+      { duration: "15 minutos", price: null },
+      { duration: "2 horas", price: null },
+      { duration: "4 horas", price: null },
+      { duration: "Pernoite", price: null },
+      { duration: "Diária", price: null },
+      { duration: "Diária de viagem", price: null },
+    ],
+    paymentMethods: ["Dinheiro", "PIX"],
     detailedServices: defaultServices,
     services: ["Massagem relaxante", "Jantar acompanhado", "Conteúdo exclusivo", "Viagens"],
     reviews: [
@@ -396,6 +458,17 @@ export const mockProfiles: Profile[] = [
     attendsTo: "Homens e mulheres",
     maxClients: "apenas 1 cliente",
     verifiedDate: "Mar/2026",
+    pricing: [
+      { duration: "30 minutos", price: 200 },
+      { duration: "1 hora", price: 400 },
+      { duration: "2 horas", price: 700 },
+      { duration: "15 minutos", price: null },
+      { duration: "4 horas", price: null },
+      { duration: "Pernoite", price: 2000 },
+      { duration: "Diária", price: null },
+      { duration: "Diária de viagem", price: null },
+    ],
+    paymentMethods: ["Dinheiro", "PIX", "Cartão de crédito"],
     detailedServices: servicesSet1,
     services: ["Dança privada", "Massagem relaxante", "Conteúdo exclusivo"],
     reviews: [
@@ -444,6 +517,17 @@ export const mockProfiles: Profile[] = [
     attendsTo: "Homens",
     maxClients: "apenas 1 cliente",
     verifiedDate: "Fev/2026",
+    pricing: [
+      { duration: "30 minutos", price: 150 },
+      { duration: "1 hora", price: 300 },
+      { duration: "15 minutos", price: null },
+      { duration: "2 horas", price: null },
+      { duration: "4 horas", price: null },
+      { duration: "Pernoite", price: null },
+      { duration: "Diária", price: null },
+      { duration: "Diária de viagem", price: null },
+    ],
+    paymentMethods: ["Dinheiro", "PIX"],
     detailedServices: defaultServices,
     services: ["Massagem relaxante", "Conteúdo exclusivo"],
     reviews: [
@@ -492,6 +576,17 @@ export const mockProfiles: Profile[] = [
     attendsTo: "Homens",
     maxClients: "apenas 1 cliente",
     verifiedDate: "Fev/2026",
+    pricing: [
+      { duration: "30 minutos", price: 200 },
+      { duration: "1 hora", price: 400 },
+      { duration: "2 horas", price: 700 },
+      { duration: "15 minutos", price: null },
+      { duration: "4 horas", price: null },
+      { duration: "Pernoite", price: 2000 },
+      { duration: "Diária", price: null },
+      { duration: "Diária de viagem", price: null },
+    ],
+    paymentMethods: ["Dinheiro", "PIX", "Cartão de crédito"],
     detailedServices: defaultServices,
     services: ["Jantar acompanhado", "Conteúdo exclusivo", "Vídeos personalizados", "Viagens"],
     reviews: [
