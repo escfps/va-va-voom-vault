@@ -107,6 +107,10 @@ const RegisterPage = () => {
       toast.error("Adicione pelo menos 1 foto");
       return;
     }
+    if (!verificationVideo) {
+      toast.error("O vídeo de verificação é obrigatório");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -583,7 +587,8 @@ const RegisterPage = () => {
                     {/* Verification Video */}
                     <div className="border-t border-border pt-4 space-y-3">
                       <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                        <Video className="h-4 w-4 text-primary" /> Vídeo de verificação (OBRIGATORIO)
+                        <Video className="h-4 w-4 text-primary" />
+                        Vídeo de verificação <span className="text-destructive font-semibold">* obrigatório</span>
                       </h4>
                       <p className="text-xs text-muted-foreground">
                         Grave um vídeo curto mostrando seu rosto para verificar que você é real. Isso aumenta a
@@ -598,14 +603,19 @@ const RegisterPage = () => {
                           </Button>
                         </div>
                       ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="gap-2"
-                          onClick={() => videoInputRef.current?.click()}
-                        >
-                          <Video className="h-4 w-4" /> Enviar vídeo
-                        </Button>
+                        <div className="space-y-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="gap-2 border-destructive/40 hover:border-destructive"
+                            onClick={() => videoInputRef.current?.click()}
+                          >
+                            <Video className="h-4 w-4" /> Enviar vídeo
+                          </Button>
+                          <p className="text-xs text-destructive">
+                            Você não poderá publicar o perfil sem enviar o vídeo.
+                          </p>
+                        </div>
                       )}
                       <input
                         ref={videoInputRef}
@@ -623,7 +633,11 @@ const RegisterPage = () => {
                       <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(3)}>
                         Voltar
                       </Button>
-                      <Button type="submit" className="flex-1 gap-2" disabled={loading || photos.length === 0}>
+                      <Button
+                        type="submit"
+                        className="flex-1 gap-2"
+                        disabled={loading || photos.length === 0 || !verificationVideo}
+                      >
                         {loading ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
