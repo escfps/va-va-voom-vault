@@ -55,6 +55,8 @@ export interface Profile {
   hasOwnPlace: boolean;
   attendsTo: string;
   maxClients: string;
+  pricing: PriceItem[];
+  paymentMethods: string[];
   detailedServices: ServiceItem[];
   services: string[];
   reviews: Review[];
