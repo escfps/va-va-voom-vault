@@ -96,6 +96,11 @@ const Navbar = () => {
                   <p className="text-sm text-muted-foreground px-2">
                     Olá, {user.user_metadata?.full_name || user.email?.split("@")[0]}
                   </p>
+                  <Link to="/meu-perfil" className="block" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full gap-2">
+                      <Edit className="h-4 w-4" /> Meu Perfil
+                    </Button>
+                  </Link>
                   <Button variant="outline" className="w-full gap-2" onClick={() => { setIsOpen(false); handleSignOut(); }}>
                     <LogOut className="h-4 w-4" /> Sair
                   </Button>
