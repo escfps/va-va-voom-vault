@@ -434,6 +434,42 @@ const ProfileDetail = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Schedule - Fatal Model style */}
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <Clock className="h-5 w-5" /> Horário de expediente
+                  </h2>
+                  <div className="space-y-0">
+                    {profile.schedule.map((item) => {
+                      const isToday = new Date().toLocaleDateString("pt-BR", { weekday: "long" }).toLowerCase() ===
+                        item.day.toLowerCase();
+                      return (
+                        <div
+                          key={item.day}
+                          className={`flex items-center justify-between border-b border-border py-3 px-2 ${isToday ? "font-bold" : ""}`}
+                        >
+                          <span className={`text-sm italic ${isToday ? "text-foreground font-bold" : "text-primary"}`}>
+                            {item.day}
+                          </span>
+                          <span className="text-sm text-foreground">
+                            {item.hours || "Não atende"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground italic mt-3">
+                    A disponibilidade do anunciante não é garantida pelo seu horário de atendimento.
+                  </p>
+                </div>
+
+                {/* Profile created at */}
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                    📋 Perfil criado em {profile.profileCreatedAt}
+                  </p>
+                </div>
               </div>
             )}
 

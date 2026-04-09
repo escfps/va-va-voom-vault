@@ -63,6 +63,8 @@ export interface Profile {
   maxClients: string;
   pricing: PriceItem[];
   paymentMethods: string[];
+  schedule: { day: string; hours: string | null }[];
+  profileCreatedAt: string;
   detailedServices: ServiceItem[];
   services: string[];
   reviews: Review[];
@@ -178,6 +180,16 @@ export const mockProfiles: Profile[] = [
       { duration: "Diária de viagem", price: null },
     ],
     paymentMethods: ["Dinheiro", "PIX"],
+    schedule: [
+      { day: "Segunda-feira", hours: "08:00 - 23:59" },
+      { day: "Terça-feira", hours: "08:00 - 23:59" },
+      { day: "Quarta-feira", hours: "08:00 - 23:59" },
+      { day: "Quinta-feira", hours: "08:00 - 23:59" },
+      { day: "Sexta-feira", hours: "08:00 - 23:59" },
+      { day: "Sábado", hours: "10:00 - 22:00" },
+      { day: "Domingo", hours: null },
+    ],
+    profileCreatedAt: "março de 2024",
     detailedServices: servicesSet1,
     services: ["Massagem relaxante", "Jantar acompanhado", "Ensaio fotográfico", "Conteúdo exclusivo", "Videochamada"],
     reviews: [
@@ -246,6 +258,16 @@ export const mockProfiles: Profile[] = [
       { duration: "Diária de viagem", price: null },
     ],
     paymentMethods: ["Dinheiro", "PIX", "Cartão de crédito"],
+    schedule: [
+      { day: "Segunda-feira", hours: "10:00 - 22:00" },
+      { day: "Terça-feira", hours: "10:00 - 22:00" },
+      { day: "Quarta-feira", hours: "10:00 - 22:00" },
+      { day: "Quinta-feira", hours: "10:00 - 22:00" },
+      { day: "Sexta-feira", hours: "10:00 - 23:59" },
+      { day: "Sábado", hours: "10:00 - 23:59" },
+      { day: "Domingo", hours: "12:00 - 20:00" },
+    ],
+    profileCreatedAt: "janeiro de 2025",
     detailedServices: defaultServices,
     services: ["Massagem relaxante", "Jantar acompanhado", "Conteúdo exclusivo", "Viagens"],
     reviews: [
@@ -313,6 +335,16 @@ export const mockProfiles: Profile[] = [
       { duration: "Diária de viagem", price: null },
     ],
     paymentMethods: ["Dinheiro", "PIX"],
+    schedule: [
+      { day: "Segunda-feira", hours: "08:00 - 23:59" },
+      { day: "Terça-feira", hours: "08:00 - 23:59" },
+      { day: "Quarta-feira", hours: "08:00 - 23:59" },
+      { day: "Quinta-feira", hours: "08:00 - 23:59" },
+      { day: "Sexta-feira", hours: "08:00 - 23:59" },
+      { day: "Sábado", hours: "10:00 - 22:00" },
+      { day: "Domingo", hours: null },
+    ],
+    profileCreatedAt: "março de 2024",
     detailedServices: defaultServices,
     services: ["Massagem relaxante", "Conteúdo exclusivo", "Videochamada"],
     reviews: [
@@ -379,6 +411,16 @@ export const mockProfiles: Profile[] = [
       { duration: "Diária de viagem", price: null },
     ],
     paymentMethods: ["Dinheiro", "PIX", "Cartão de crédito"],
+    schedule: [
+      { day: "Segunda-feira", hours: "10:00 - 22:00" },
+      { day: "Terça-feira", hours: "10:00 - 22:00" },
+      { day: "Quarta-feira", hours: "10:00 - 22:00" },
+      { day: "Quinta-feira", hours: "10:00 - 22:00" },
+      { day: "Sexta-feira", hours: "10:00 - 23:59" },
+      { day: "Sábado", hours: "10:00 - 23:59" },
+      { day: "Domingo", hours: "12:00 - 20:00" },
+    ],
+    profileCreatedAt: "janeiro de 2025",
     detailedServices: servicesSet1,
     services: ["Conteúdo exclusivo", "Vídeos personalizados", "Videochamada"],
     reviews: [
@@ -445,6 +487,16 @@ export const mockProfiles: Profile[] = [
       { duration: "Diária de viagem", price: null },
     ],
     paymentMethods: ["Dinheiro", "PIX"],
+    schedule: [
+      { day: "Segunda-feira", hours: "08:00 - 23:59" },
+      { day: "Terça-feira", hours: "08:00 - 23:59" },
+      { day: "Quarta-feira", hours: "08:00 - 23:59" },
+      { day: "Quinta-feira", hours: "08:00 - 23:59" },
+      { day: "Sexta-feira", hours: "08:00 - 23:59" },
+      { day: "Sábado", hours: "10:00 - 22:00" },
+      { day: "Domingo", hours: null },
+    ],
+    profileCreatedAt: "março de 2024",
     detailedServices: defaultServices,
     services: ["Massagem relaxante", "Jantar acompanhado", "Conteúdo exclusivo", "Viagens"],
     reviews: [
@@ -511,6 +563,16 @@ export const mockProfiles: Profile[] = [
       { duration: "Diária de viagem", price: null },
     ],
     paymentMethods: ["Dinheiro", "PIX", "Cartão de crédito"],
+    schedule: [
+      { day: "Segunda-feira", hours: "10:00 - 22:00" },
+      { day: "Terça-feira", hours: "10:00 - 22:00" },
+      { day: "Quarta-feira", hours: "10:00 - 22:00" },
+      { day: "Quinta-feira", hours: "10:00 - 22:00" },
+      { day: "Sexta-feira", hours: "10:00 - 23:59" },
+      { day: "Sábado", hours: "10:00 - 23:59" },
+      { day: "Domingo", hours: "12:00 - 20:00" },
+    ],
+    profileCreatedAt: "janeiro de 2025",
     detailedServices: servicesSet1,
     services: ["Dança privada", "Massagem relaxante", "Conteúdo exclusivo"],
     reviews: [
@@ -576,6 +638,16 @@ export const mockProfiles: Profile[] = [
       { duration: "Diária de viagem", price: null },
     ],
     paymentMethods: ["Dinheiro", "PIX"],
+    schedule: [
+      { day: "Segunda-feira", hours: "08:00 - 23:59" },
+      { day: "Terça-feira", hours: "08:00 - 23:59" },
+      { day: "Quarta-feira", hours: "08:00 - 23:59" },
+      { day: "Quinta-feira", hours: "08:00 - 23:59" },
+      { day: "Sexta-feira", hours: "08:00 - 23:59" },
+      { day: "Sábado", hours: "10:00 - 22:00" },
+      { day: "Domingo", hours: null },
+    ],
+    profileCreatedAt: "março de 2024",
     detailedServices: defaultServices,
     services: ["Massagem relaxante", "Conteúdo exclusivo"],
     reviews: [
@@ -641,6 +713,16 @@ export const mockProfiles: Profile[] = [
       { duration: "Diária de viagem", price: null },
     ],
     paymentMethods: ["Dinheiro", "PIX", "Cartão de crédito"],
+    schedule: [
+      { day: "Segunda-feira", hours: "10:00 - 22:00" },
+      { day: "Terça-feira", hours: "10:00 - 22:00" },
+      { day: "Quarta-feira", hours: "10:00 - 22:00" },
+      { day: "Quinta-feira", hours: "10:00 - 22:00" },
+      { day: "Sexta-feira", hours: "10:00 - 23:59" },
+      { day: "Sábado", hours: "10:00 - 23:59" },
+      { day: "Domingo", hours: "12:00 - 20:00" },
+    ],
+    profileCreatedAt: "janeiro de 2025",
     detailedServices: defaultServices,
     services: ["Jantar acompanhado", "Conteúdo exclusivo", "Vídeos personalizados", "Viagens"],
     reviews: [
