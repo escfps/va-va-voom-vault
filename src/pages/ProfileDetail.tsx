@@ -392,20 +392,46 @@ const ProfileDetail = () => {
                   </div>
                 )}
 
-                {/* Location */}
+                {/* Location - Fatal Model style */}
                 <div>
-                  <h2 className="text-lg font-semibold text-foreground mb-3">Localização</h2>
-                  <div className="bg-card border border-border rounded-xl p-5 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <span className="text-sm text-foreground">{profile.location}</span>
-                    </div>
-                    {profile.hasOwnPlace && (
-                      <div className="flex items-center gap-3">
-                        <Home className="h-4 w-4 text-primary" />
-                        <span className="text-sm text-foreground">Possui <strong>local próprio</strong></span>
+                  <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-primary" /> Dados de localidade
+                  </h2>
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* Left column */}
+                    <div className="space-y-5">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Locais que atendo</p>
+                        <p className="text-sm text-primary mt-0.5">{profile.placesServed}</p>
                       </div>
-                    )}
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Comodidades do local</p>
+                        <p className="text-sm text-muted-foreground mt-0.5">{profile.amenities}</p>
+                      </div>
+                    </div>
+                    {/* Right column */}
+                    <div className="space-y-5">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Minha localização</p>
+                        <p className="text-sm text-muted-foreground mt-0.5">{profile.locationZone}</p>
+                        <p className="text-sm text-primary">{profile.location}</p>
+                        <p className="text-sm text-muted-foreground">{profile.locationDistance}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Bairros que também atendo</p>
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {profile.neighborhoods.map((n) => (
+                            <span key={n} className="text-sm text-primary underline">{n}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Cidades vizinhas que atendo</p>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {profile.nearbyCities || "Não atende em cidades vizinhas"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
