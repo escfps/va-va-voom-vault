@@ -4,6 +4,11 @@ export interface ServiceItem {
   description: string;
 }
 
+export interface PriceItem {
+  duration: string;
+  price: number | null; // null = "Não realiza"
+}
+
 export interface Review {
   rating: number;
   text: string;
