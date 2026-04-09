@@ -2,16 +2,16 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-foreground text-background py-12">
+    <footer className="bg-card text-card-foreground border-t border-border py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-2xl font-bold text-primary">Fatal</span>
-              <span className="text-2xl font-light">Model</span>
+              <span className="text-2xl font-bold text-primary">MODEL</span>
+              <span className="text-2xl font-light">X</span>
             </div>
             <p className="text-sm opacity-70">
-              A maior plataforma de divulgação de conteúdo e modelos do Brasil.
+              A maior plataforma de divulgação de conteúdo e modelos.
             </p>
           </div>
 
@@ -44,8 +44,8 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-background/20 mt-10 pt-6 text-center text-sm opacity-50">
-          <p>© {new Date().getFullYear()} Fatal Model. Todos os direitos reservados.</p>
+        <div className="border-t border-border mt-10 pt-6 text-center text-sm text-muted-foreground">
+          <p>© {new Date().getFullYear()} Model X. Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>
