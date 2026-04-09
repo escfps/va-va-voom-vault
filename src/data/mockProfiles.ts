@@ -52,6 +52,12 @@ export interface Profile {
   smoker: boolean;
   languages: string[];
   location: string;
+  locationZone: string;
+  locationDistance: string;
+  placesServed: string;
+  amenities: string;
+  neighborhoods: string[];
+  nearbyCities: string | null;
   hasOwnPlace: boolean;
   attendsTo: string;
   maxClients: string;
