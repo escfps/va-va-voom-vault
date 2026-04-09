@@ -95,16 +95,6 @@ const RegisterPage = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="price">Valor a partir de (R$)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => update("price", e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
                   <Label htmlFor="description">Sobre você</Label>
                   <Textarea
                     id="description"
