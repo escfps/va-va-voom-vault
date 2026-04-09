@@ -14,7 +14,177 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          age: number
+          amenities: string | null
+          attends_to: string | null
+          city: string
+          cover_image: string | null
+          created_at: string
+          description: string | null
+          detailed_services: Json | null
+          ethnicity: string | null
+          eye_color: string | null
+          gender: string | null
+          gender_description: string | null
+          genitalia: string | null
+          hair_color: string | null
+          hair_length: string | null
+          has_own_place: boolean | null
+          height: string | null
+          id: string
+          image: string | null
+          images: string[] | null
+          languages: string[] | null
+          location: string | null
+          location_distance: string | null
+          location_zone: string | null
+          max_clients: string | null
+          name: string
+          nearby_cities: string | null
+          neighborhoods: string[] | null
+          payment_methods: string[] | null
+          phone: string | null
+          piercings: boolean | null
+          places_served: string | null
+          price: number
+          price_duration: string | null
+          pricing: Json | null
+          profile_created_at: string | null
+          rating: number | null
+          review_count: number | null
+          reviews: Json | null
+          schedule: Json | null
+          services: string[] | null
+          sexual_preference: string | null
+          sexual_preference_description: string | null
+          shoe_size: string | null
+          silicone: boolean | null
+          smoker: boolean | null
+          state: string
+          tagline: string | null
+          tags: string[] | null
+          tattoos: boolean | null
+          updated_at: string
+          verified: boolean | null
+          verified_date: string | null
+          weight: string | null
+        }
+        Insert: {
+          age: number
+          amenities?: string | null
+          attends_to?: string | null
+          city: string
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          detailed_services?: Json | null
+          ethnicity?: string | null
+          eye_color?: string | null
+          gender?: string | null
+          gender_description?: string | null
+          genitalia?: string | null
+          hair_color?: string | null
+          hair_length?: string | null
+          has_own_place?: boolean | null
+          height?: string | null
+          id?: string
+          image?: string | null
+          images?: string[] | null
+          languages?: string[] | null
+          location?: string | null
+          location_distance?: string | null
+          location_zone?: string | null
+          max_clients?: string | null
+          name: string
+          nearby_cities?: string | null
+          neighborhoods?: string[] | null
+          payment_methods?: string[] | null
+          phone?: string | null
+          piercings?: boolean | null
+          places_served?: string | null
+          price?: number
+          price_duration?: string | null
+          pricing?: Json | null
+          profile_created_at?: string | null
+          rating?: number | null
+          review_count?: number | null
+          reviews?: Json | null
+          schedule?: Json | null
+          services?: string[] | null
+          sexual_preference?: string | null
+          sexual_preference_description?: string | null
+          shoe_size?: string | null
+          silicone?: boolean | null
+          smoker?: boolean | null
+          state: string
+          tagline?: string | null
+          tags?: string[] | null
+          tattoos?: boolean | null
+          updated_at?: string
+          verified?: boolean | null
+          verified_date?: string | null
+          weight?: string | null
+        }
+        Update: {
+          age?: number
+          amenities?: string | null
+          attends_to?: string | null
+          city?: string
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          detailed_services?: Json | null
+          ethnicity?: string | null
+          eye_color?: string | null
+          gender?: string | null
+          gender_description?: string | null
+          genitalia?: string | null
+          hair_color?: string | null
+          hair_length?: string | null
+          has_own_place?: boolean | null
+          height?: string | null
+          id?: string
+          image?: string | null
+          images?: string[] | null
+          languages?: string[] | null
+          location?: string | null
+          location_distance?: string | null
+          location_zone?: string | null
+          max_clients?: string | null
+          name?: string
+          nearby_cities?: string | null
+          neighborhoods?: string[] | null
+          payment_methods?: string[] | null
+          phone?: string | null
+          piercings?: boolean | null
+          places_served?: string | null
+          price?: number
+          price_duration?: string | null
+          pricing?: Json | null
+          profile_created_at?: string | null
+          rating?: number | null
+          review_count?: number | null
+          reviews?: Json | null
+          schedule?: Json | null
+          services?: string[] | null
+          sexual_preference?: string | null
+          sexual_preference_description?: string | null
+          shoe_size?: string | null
+          silicone?: boolean | null
+          smoker?: boolean | null
+          state?: string
+          tagline?: string | null
+          tags?: string[] | null
+          tattoos?: boolean | null
+          updated_at?: string
+          verified?: boolean | null
+          verified_date?: string | null
+          weight?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
