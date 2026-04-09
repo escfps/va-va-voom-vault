@@ -35,7 +35,7 @@ const HeroSection = () => {
             </p>
             <Button
               size="lg"
-              className="mt-8 bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8"
+              className="mt-8 bg-[hsl(210,80%,50%)] text-[hsl(0,0%,100%)] hover:bg-[hsl(210,80%,40%)] text-base px-8"
               onClick={() => navigate("/cadastro")}
             >
               Anuncie gratuitamente
