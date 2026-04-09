@@ -1,7 +1,14 @@
+import { useQuery } from "@tanstack/react-query";
 import ProfileCard from "./ProfileCard";
-import { mockProfiles } from "@/data/mockProfiles";
+import { fetchProfiles } from "@/lib/profiles";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const FeaturedProfiles = () => {
+  const { data: profiles = [], isLoading } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: fetchProfiles,
+  });
+
   return (
     <section className="py-16 bg-muted/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,11 +21,19 @@ const FeaturedProfiles = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {mockProfiles.map((profile) => (
-            <ProfileCard key={profile.id} {...profile} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {[...Array(8)].map((_, i) => (
+              <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {profiles.map((profile) => (
+              <ProfileCard key={profile.id} {...profile} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

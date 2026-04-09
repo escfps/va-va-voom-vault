@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { mockProfiles } from "@/data/mockProfiles";
+import { useQuery } from "@tanstack/react-query";
+import { fetchProfileById, fetchProfiles } from "@/lib/profiles";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
@@ -14,10 +15,30 @@ import {
 
 const ProfileDetail = () => {
   const { id } = useParams();
-  const profile = mockProfiles.find((p) => p.id === id);
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["profile", id],
+    queryFn: () => fetchProfileById(id!),
+    enabled: !!id,
+  });
+  const { data: allProfiles = [] } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: fetchProfiles,
+  });
   const [activeTab, setActiveTab] = useState<"fotos" | "sobre" | "avaliacoes">("fotos");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [expandedService, setExpandedService] = useState<string | null>(null);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Carregando perfil...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!profile) {
     return (
@@ -509,7 +530,7 @@ const ProfileDetail = () => {
 
         {/* Related profiles from same city */}
         {(() => {
-          const related = mockProfiles.filter(
+          const related = allProfiles.filter(
             (p) => p.city === profile.city && p.id !== profile.id
           );
           if (related.length === 0) return null;

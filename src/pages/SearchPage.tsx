@@ -1,18 +1,25 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProfileCard from "@/components/ProfileCard";
-import { mockProfiles } from "@/data/mockProfiles";
+import { fetchProfiles } from "@/lib/profiles";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const cidadeParam = searchParams.get("cidade") || "";
   const [search, setSearch] = useState(cidadeParam);
 
-  const filtered = mockProfiles.filter((p) => {
+  const { data: allProfiles = [], isLoading } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: fetchProfiles,
+  });
+
+  const filtered = allProfiles.filter((p) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
@@ -42,7 +49,13 @@ const SearchPage = () => {
             </div>
           </div>
 
-          {filtered.length > 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {[...Array(8)].map((_, i) => (
+                <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+              ))}
+            </div>
+          ) : filtered.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {filtered.map((profile) => (
                 <ProfileCard key={profile.id} {...profile} />
