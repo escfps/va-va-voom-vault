@@ -31,10 +31,17 @@ export interface Profile {
   phone: string;
   height: string;
   weight: string;
+  gender: string;
+  genderDescription: string;
+  genitalia: string;
+  sexualPreference: string;
+  sexualPreferenceDescription: string;
   ethnicity: string;
   eyeColor: string;
   hairColor: string;
   hairLength: string;
+  shoeSize: string;
+  silicone: boolean;
   tattoos: boolean;
   piercings: boolean;
   smoker: boolean;
