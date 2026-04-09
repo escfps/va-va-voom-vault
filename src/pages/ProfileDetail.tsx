@@ -40,14 +40,21 @@ const ProfileDetail = () => {
   ];
 
   const characteristics = [
-    { label: "Peso", value: profile.weight, icon: Weight },
-    { label: "Altura", value: profile.height, icon: Ruler },
-    { label: "Etnia", value: profile.ethnicity, icon: User },
-    { label: "Olhos", value: profile.eyeColor, icon: Eye },
-    { label: "Cabelo", value: `${profile.hairColor}, ${profile.hairLength}`, icon: Scissors },
-    { label: "Tatuagens", value: profile.tattoos ? "Sim" : "Não", icon: Heart },
-    { label: "Piercings", value: profile.piercings ? "Sim" : "Não", icon: Heart },
-    { label: "Idiomas", value: profile.languages.join(", "), icon: Languages },
+    { label: "Gênero", value: profile.gender, description: profile.genderDescription },
+    { label: "Genitália", value: profile.genitalia },
+    { label: "Preferência sexual", value: profile.sexualPreference, description: profile.sexualPreferenceDescription },
+    { label: "Peso", value: profile.weight },
+    { label: "Altura", value: profile.height },
+    { label: "Etnia", value: profile.ethnicity },
+    { label: "Cor dos olhos", value: profile.eyeColor },
+    { label: "Estilo de cabelo", value: profile.hairColor },
+    { label: "Tamanho de cabelo", value: profile.hairLength },
+    { label: "Tamanho do pé", value: profile.shoeSize },
+    { label: "Silicone", value: profile.silicone ? "Sim" : "Não" },
+    { label: "Tatuagens", value: profile.tattoos ? "Sim" : "Não" },
+    { label: "Piercings", value: profile.piercings ? "Sim" : "Não" },
+    { label: "Fumante", value: profile.smoker ? "Sim" : "Não informado" },
+    { label: "Idiomas", value: profile.languages.join(", ") },
   ];
 
   const offeredServices = profile.detailedServices.filter((s) => s.does);
@@ -246,17 +253,19 @@ const ProfileDetail = () => {
                   <p className="text-foreground leading-relaxed">{profile.description}</p>
                 </div>
 
-                {/* Physical Characteristics */}
+                {/* Physical Characteristics - Fatal Model style */}
                 <div>
-                  <h2 className="text-lg font-semibold text-foreground mb-4">Características físicas</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    Características físicas
+                  </h2>
+                  <div className="grid grid-cols-2 gap-0">
                     {characteristics.map((char) => (
-                      <div key={char.label} className="bg-card border border-border rounded-xl p-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <char.icon className="h-4 w-4 text-primary" />
-                          <span className="text-xs text-muted-foreground">{char.label}</span>
-                        </div>
-                        <p className="text-sm font-medium text-foreground">{char.value}</p>
+                      <div key={char.label} className="border-b border-border py-4 px-2">
+                        <p className="text-sm font-semibold text-foreground">{char.label}</p>
+                        <p className="text-sm text-primary mt-0.5">{char.value}</p>
+                        {"description" in char && char.description && (
+                          <p className="text-xs text-muted-foreground italic mt-0.5">{char.description}</p>
+                        )}
                       </div>
                     ))}
                   </div>
