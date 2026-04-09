@@ -98,15 +98,17 @@ const RegisterPage = () => {
                     required
                   />
                 </div>
-                <div>
-                  <Label htmlFor="description">Sobre você</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => update("description", e.target.value)}
-                    rows={4}
-                  />
-                </div>
+                {!isCliente && (
+                  <div>
+                    <Label htmlFor="description">Sobre você</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => update("description", e.target.value)}
+                      rows={4}
+                    />
+                  </div>
+                )}
                 <Button
                   type="submit"
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
