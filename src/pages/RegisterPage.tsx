@@ -12,16 +12,27 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Camera, X, Upload, Loader2 } from "lucide-react";
+import { Camera, X, Upload, Loader2, Video } from "lucide-react";
+import ScheduleSection, { defaultSchedule, scheduleToDb } from "@/components/register/ScheduleSection";
+import ServicesSection, { defaultServices, servicesToDb } from "@/components/register/ServicesSection";
+import PaymentSection from "@/components/register/PaymentSection";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [verificationVideo, setVerificationVideo] = useState<File | null>(null);
   const [step, setStep] = useState(1);
+  const totalSteps = 4;
+
+  const [schedule, setSchedule] = useState(defaultSchedule);
+  const [services, setServices] = useState(defaultServices);
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(["Dinheiro", "PIX"]);
+  const [pricing, setPricing] = useState([{ duration: "1 hora", price: "" }]);
 
   const [form, setForm] = useState({
     name: "",
@@ -56,8 +67,7 @@ const RegisterPage = () => {
       toast.error("Máximo de 10 fotos permitidas");
       return;
     }
-    const newPhotos = [...photos, ...files];
-    setPhotos(newPhotos);
+    setPhotos((prev) => [...prev, ...files]);
     const newPreviews = files.map((f) => URL.createObjectURL(f));
     setPreviews((prev) => [...prev, ...newPreviews]);
   };
@@ -77,13 +87,8 @@ const RegisterPage = () => {
       const { error } = await supabase.storage
         .from("model-photos")
         .upload(path, photo, { cacheControl: "3600", upsert: false });
-      if (error) {
-        console.error("Upload error:", error);
-        continue;
-      }
-      const { data: urlData } = supabase.storage
-        .from("model-photos")
-        .getPublicUrl(path);
+      if (error) { console.error("Upload error:", error); continue; }
+      const { data: urlData } = supabase.storage.from("model-photos").getPublicUrl(path);
       urls.push(urlData.publicUrl);
     }
     return urls;
@@ -91,23 +96,18 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      toast.error("Você precisa estar logado para cadastrar um perfil");
-      navigate("/login");
-      return;
-    }
-    if (photos.length === 0) {
-      toast.error("Adicione pelo menos 1 foto");
-      return;
-    }
+    if (!user) { toast.error("Você precisa estar logado"); navigate("/login"); return; }
+    if (photos.length === 0) { toast.error("Adicione pelo menos 1 foto"); return; }
 
     setLoading(true);
     try {
       const imageUrls = await uploadPhotos();
-      if (imageUrls.length === 0) {
-        toast.error("Erro ao fazer upload das fotos");
-        setLoading(false);
-        return;
+      if (imageUrls.length === 0) { toast.error("Erro ao fazer upload das fotos"); setLoading(false); return; }
+
+      const mainPrice = pricing.find((p) => p.duration === "1 hora")?.price || form.price;
+      const pricingDb = pricing.filter((p) => p.price).map((p) => ({ duration: p.duration, price: parseInt(p.price) }));
+      if (pricingDb.length === 0 && form.price) {
+        pricingDb.push({ duration: "1 hora", price: parseInt(form.price) });
       }
 
       const { error } = await supabase.from("profiles").insert({
@@ -119,7 +119,7 @@ const RegisterPage = () => {
         phone: form.phone,
         description: form.description,
         tagline: form.tagline,
-        price: parseInt(form.price),
+        price: parseInt(mainPrice || form.price),
         price_duration: "1 hora",
         image: imageUrls[0],
         images: imageUrls,
@@ -153,22 +153,12 @@ const RegisterPage = () => {
         rating: 0,
         review_count: 0,
         tags: [],
-        pricing: [
-          { duration: "1 hora", price: parseInt(form.price) },
-        ],
-        payment_methods: ["Dinheiro", "PIX"],
-        schedule: [
-          { day: "Segunda-feira", hours: "08:00 - 22:00" },
-          { day: "Terça-feira", hours: "08:00 - 22:00" },
-          { day: "Quarta-feira", hours: "08:00 - 22:00" },
-          { day: "Quinta-feira", hours: "08:00 - 22:00" },
-          { day: "Sexta-feira", hours: "08:00 - 22:00" },
-          { day: "Sábado", hours: "10:00 - 20:00" },
-          { day: "Domingo", hours: null },
-        ],
+        pricing: pricingDb,
+        payment_methods: paymentMethods,
+        schedule: scheduleToDb(schedule),
         profile_created_at: new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" }),
-        detailed_services: [],
-        services: [],
+        detailed_services: servicesToDb(services),
+        services: services.filter((s) => s.does).map((s) => s.name),
         reviews: [],
       });
 
@@ -213,19 +203,13 @@ const RegisterPage = () => {
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Cadastro de Modelo</CardTitle>
-              <CardDescription>
-                Preencha seus dados e adicione suas melhores fotos
-              </CardDescription>
+              <CardDescription>Preencha seus dados e adicione suas melhores fotos</CardDescription>
               <div className="flex justify-center gap-2 mt-4">
-                {[1, 2, 3].map((s) => (
-                  <div
-                    key={s}
-                    className={`h-2 w-16 rounded-full transition-colors ${
-                      s <= step ? "bg-primary" : "bg-muted"
-                    }`}
-                  />
+                {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
+                  <div key={s} className={`h-2 w-12 rounded-full transition-colors ${s <= step ? "bg-primary" : "bg-muted"}`} />
                 ))}
               </div>
+              <p className="text-xs text-muted-foreground mt-2">Etapa {step} de {totalSteps}</p>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit}>
@@ -287,14 +271,8 @@ const RegisterPage = () => {
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground">Aparência</h3>
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>Altura</Label>
-                        <Input value={form.height} onChange={(e) => update("height", e.target.value)} placeholder="1,70 m" />
-                      </div>
-                      <div>
-                        <Label>Peso</Label>
-                        <Input value={form.weight} onChange={(e) => update("weight", e.target.value)} placeholder="55 kg" />
-                      </div>
+                      <div><Label>Altura</Label><Input value={form.height} onChange={(e) => update("height", e.target.value)} placeholder="1,70 m" /></div>
+                      <div><Label>Peso</Label><Input value={form.weight} onChange={(e) => update("weight", e.target.value)} placeholder="55 kg" /></div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -302,9 +280,7 @@ const RegisterPage = () => {
                         <Select value={form.ethnicity} onValueChange={(v) => update("ethnicity", v)}>
                           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
-                            {["Branca", "Morena", "Negra", "Asiática", "Indígena", "Outra"].map((e) => (
-                              <SelectItem key={e} value={e}>{e}</SelectItem>
-                            ))}
+                            {["Branca", "Morena", "Negra", "Asiática", "Indígena", "Outra"].map((e) => (<SelectItem key={e} value={e}>{e}</SelectItem>))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -313,9 +289,7 @@ const RegisterPage = () => {
                         <Select value={form.eyeColor} onValueChange={(v) => update("eyeColor", v)}>
                           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
-                            {["Castanho", "Verde", "Azul", "Mel", "Preto"].map((c) => (
-                              <SelectItem key={c} value={c}>{c}</SelectItem>
-                            ))}
+                            {["Castanho", "Verde", "Azul", "Mel", "Preto"].map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -326,9 +300,7 @@ const RegisterPage = () => {
                         <Select value={form.hairColor} onValueChange={(v) => update("hairColor", v)}>
                           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
-                            {["Loira", "Castanha", "Ruiva", "Preta", "Colorido"].map((c) => (
-                              <SelectItem key={c} value={c}>{c}</SelectItem>
-                            ))}
+                            {["Loira", "Castanha", "Ruiva", "Preta", "Colorido"].map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -337,9 +309,7 @@ const RegisterPage = () => {
                         <Select value={form.hairLength} onValueChange={(v) => update("hairLength", v)}>
                           <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                           <SelectContent>
-                            {["Curto", "Médio", "Longo"].map((l) => (
-                              <SelectItem key={l} value={l}>{l}</SelectItem>
-                            ))}
+                            {["Curto", "Médio", "Longo"].map((l) => (<SelectItem key={l} value={l}>{l}</SelectItem>))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -350,9 +320,7 @@ const RegisterPage = () => {
                         <Select value={form.gender} onValueChange={(v) => update("gender", v)}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {["Mulher", "Homem", "Trans", "Outro"].map((g) => (
-                              <SelectItem key={g} value={g}>{g}</SelectItem>
-                            ))}
+                            {["Mulher", "Homem", "Trans", "Outro"].map((g) => (<SelectItem key={g} value={g}>{g}</SelectItem>))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -361,14 +329,11 @@ const RegisterPage = () => {
                         <Select value={form.attendsTo} onValueChange={(v) => update("attendsTo", v)}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {["Homens", "Mulheres", "Homens e mulheres", "Homens e casais", "Todos"].map((a) => (
-                              <SelectItem key={a} value={a}>{a}</SelectItem>
-                            ))}
+                            {["Homens", "Mulheres", "Homens e mulheres", "Homens e casais", "Todos"].map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
-
                     <div className="space-y-3 pt-2">
                       {[
                         { key: "hasOwnPlace", label: "Tenho local próprio" },
@@ -383,16 +348,38 @@ const RegisterPage = () => {
                         </div>
                       ))}
                     </div>
-
                     <div className="flex gap-3">
                       <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(1)}>Voltar</Button>
-                      <Button type="button" className="flex-1" onClick={() => setStep(3)}>Próximo: Fotos</Button>
+                      <Button type="button" className="flex-1" onClick={() => setStep(3)}>Próximo: Serviços</Button>
                     </div>
                   </div>
                 )}
 
-                {/* Step 3: Photos */}
+                {/* Step 3: Services, Schedule, Payment */}
                 {step === 3 && (
+                  <div className="space-y-6">
+                    <h3 className="font-semibold text-foreground">Serviços, Horários e Valores</h3>
+                    <ServicesSection services={services} onChange={setServices} />
+                    <div className="border-t border-border pt-4">
+                      <ScheduleSection schedule={schedule} onChange={setSchedule} />
+                    </div>
+                    <div className="border-t border-border pt-4">
+                      <PaymentSection
+                        paymentMethods={paymentMethods}
+                        onPaymentMethodsChange={setPaymentMethods}
+                        pricing={pricing}
+                        onPricingChange={setPricing}
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(2)}>Voltar</Button>
+                      <Button type="button" className="flex-1" onClick={() => setStep(4)}>Próximo: Fotos</Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Photos & Video */}
+                {step === 4 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground">Suas fotos</h3>
                     <p className="text-sm text-muted-foreground">Adicione até 10 fotos. A primeira será sua foto principal.</p>
@@ -404,50 +391,52 @@ const RegisterPage = () => {
                           {i === 0 && (
                             <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">Principal</span>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => removePhoto(i)}
-                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
-                          >
+                          <button type="button" onClick={() => removePhoto(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
                             <X className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       ))}
                       {photos.length < 10 && (
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="aspect-[3/4] rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                        >
+                        <button type="button" onClick={() => fileInputRef.current?.click()} className="aspect-[3/4] rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                           <Camera className="h-6 w-6" />
                           <span className="text-xs">Adicionar</span>
                         </button>
                       )}
                     </div>
 
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={handlePhotos}
-                    />
+                    <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotos} />
+
+                    {/* Verification Video */}
+                    <div className="border-t border-border pt-4 space-y-3">
+                      <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+                        <Video className="h-4 w-4 text-primary" /> Vídeo de verificação (opcional)
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Grave um vídeo curto mostrando seu rosto para verificar que você é real. Isso aumenta a confiança dos clientes.
+                      </p>
+                      {verificationVideo ? (
+                        <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
+                          <Video className="h-5 w-5 text-primary" />
+                          <span className="text-sm text-foreground flex-1 truncate">{verificationVideo.name}</span>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setVerificationVideo(null)}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button type="button" variant="outline" className="gap-2" onClick={() => videoInputRef.current?.click()}>
+                          <Video className="h-4 w-4" /> Enviar vídeo
+                        </Button>
+                      )}
+                      <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setVerificationVideo(file);
+                      }} />
+                    </div>
 
                     <div className="flex gap-3 pt-4">
-                      <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(2)}>Voltar</Button>
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(3)}>Voltar</Button>
                       <Button type="submit" className="flex-1 gap-2" disabled={loading || photos.length === 0}>
-                        {loading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Criando perfil...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-4 w-4" />
-                            Publicar perfil
-                          </>
-                        )}
+                        {loading ? (<><Loader2 className="h-4 w-4 animate-spin" />Criando perfil...</>) : (<><Upload className="h-4 w-4" />Publicar perfil</>)}
                       </Button>
                     </div>
                   </div>
