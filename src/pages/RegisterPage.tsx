@@ -225,7 +225,6 @@ const RegisterPage = () => {
         detailed_services: servicesToDb(services),
         services: services.filter((s) => s.does).map((s) => s.name),
         reviews: [],
-        plan: selectedPlan,
       });
 
       if (error) {
