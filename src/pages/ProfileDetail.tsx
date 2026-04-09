@@ -530,7 +530,7 @@ const ProfileDetail = () => {
 
         {/* Related profiles from same city */}
         {(() => {
-          const related = mockProfiles.filter(
+          const related = allProfiles.filter(
             (p) => p.city === profile.city && p.id !== profile.id
           );
           if (related.length === 0) return null;
