@@ -139,14 +139,12 @@ const ProfileDetail = () => {
                   {profile.rating.toFixed(1)}
                 </span>
               </div>
-              {profile.verified && (
+              {profile.verified && profile.verifiedDate && (
                 <p className="text-xs text-primary mt-2 flex items-center gap-1">
                   <CheckCircle className="h-3 w-3" />
-                  Documentos verificados
+                  Verificada em {profile.verifiedDate}
                 </p>
               )}
-            </div>
-          </div>
 
           {/* Reviews preview + Pricing + Location cards */}
           <div className="grid md:grid-cols-3 gap-4 mt-8">
