@@ -25,6 +25,10 @@ import {
   Camera,
   User,
   MessageSquare,
+  Video,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
 } from "lucide-react";
 
 const ProfileDetail = () => {
