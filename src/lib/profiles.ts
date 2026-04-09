@@ -1,8 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Profile, ServiceItem, PriceItem, Review } from "@/data/mockProfiles";
 
-type DbProfile = Awaited<ReturnType<typeof supabase.from<"profiles">>["data"]> extends (infer T)[] | null ? T : never;
-
 function mapDbToProfile(row: any): Profile {
   return {
     id: row.id,
