@@ -40,14 +40,21 @@ const ProfileDetail = () => {
   ];
 
   const characteristics = [
-    { label: "Peso", value: profile.weight, icon: Weight },
-    { label: "Altura", value: profile.height, icon: Ruler },
-    { label: "Etnia", value: profile.ethnicity, icon: User },
-    { label: "Olhos", value: profile.eyeColor, icon: Eye },
-    { label: "Cabelo", value: `${profile.hairColor}, ${profile.hairLength}`, icon: Scissors },
-    { label: "Tatuagens", value: profile.tattoos ? "Sim" : "Não", icon: Heart },
-    { label: "Piercings", value: profile.piercings ? "Sim" : "Não", icon: Heart },
-    { label: "Idiomas", value: profile.languages.join(", "), icon: Languages },
+    { label: "Gênero", value: profile.gender, description: profile.genderDescription },
+    { label: "Genitália", value: profile.genitalia },
+    { label: "Preferência sexual", value: profile.sexualPreference, description: profile.sexualPreferenceDescription },
+    { label: "Peso", value: profile.weight },
+    { label: "Altura", value: profile.height },
+    { label: "Etnia", value: profile.ethnicity },
+    { label: "Cor dos olhos", value: profile.eyeColor },
+    { label: "Estilo de cabelo", value: profile.hairColor },
+    { label: "Tamanho de cabelo", value: profile.hairLength },
+    { label: "Tamanho do pé", value: profile.shoeSize },
+    { label: "Silicone", value: profile.silicone ? "Sim" : "Não" },
+    { label: "Tatuagens", value: profile.tattoos ? "Sim" : "Não" },
+    { label: "Piercings", value: profile.piercings ? "Sim" : "Não" },
+    { label: "Fumante", value: profile.smoker ? "Sim" : "Não informado" },
+    { label: "Idiomas", value: profile.languages.join(", ") },
   ];
 
   const offeredServices = profile.detailedServices.filter((s) => s.does);
