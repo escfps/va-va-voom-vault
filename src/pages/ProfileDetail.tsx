@@ -507,6 +507,53 @@ const ProfileDetail = () => {
           </div>
         </div>
 
+        {/* Related profiles from same city */}
+        {(() => {
+          const related = mockProfiles.filter(
+            (p) => p.city === profile.city && p.id !== profile.id
+          );
+          if (related.length === 0) return null;
+          return (
+            <section className="mt-12 mb-20 md:mb-8">
+              <h2 className="text-xl font-bold text-foreground text-center mb-6">
+                Mais acompanhantes em {profile.city}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {related.slice(0, 3).map((p) => (
+                  <Link
+                    key={p.id}
+                    to={`/perfil/${p.id}`}
+                    className="flex bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
+                  >
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      className="w-28 h-28 object-cover flex-shrink-0"
+                      loading="lazy"
+                    />
+                    <div className="p-3 flex flex-col justify-center min-w-0">
+                      <h3 className="font-semibold text-foreground truncate">{p.name}</h3>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                        {p.description?.slice(0, 80) || "Confira meu perfil..."}...
+                      </p>
+                      <p className="text-sm font-bold text-primary mt-1">
+                        R$ {p.pricing?.[1]?.price?.toLocaleString("pt-BR") || p.price.toLocaleString("pt-BR")}/h
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <div className="text-center mt-6">
+                <Link to={`/busca?cidade=${encodeURIComponent(profile.city)}`}>
+                  <Button variant="outline" className="px-8">
+                    Ver todos de {profile.city}
+                  </Button>
+                </Link>
+              </div>
+            </section>
+          );
+        })()}
+
         {/* Floating WhatsApp mobile */}
         <div className="fixed bottom-6 left-4 right-4 md:hidden z-40">
           <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 shadow-xl">
