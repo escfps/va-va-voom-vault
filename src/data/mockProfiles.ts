@@ -1,3 +1,15 @@
+export interface ServiceItem {
+  name: string;
+  does: boolean;
+  description: string;
+}
+
+export interface Review {
+  rating: number;
+  text: string;
+  timeAgo: string;
+}
+
 export interface Profile {
   id: string;
   name: string;
@@ -11,6 +23,7 @@ export interface Profile {
   price: number;
   priceDuration: string;
   verified: boolean;
+  verifiedDate?: string;
   rating: number;
   reviewCount: number;
   tags: string[];
@@ -29,15 +42,37 @@ export interface Profile {
   location: string;
   hasOwnPlace: boolean;
   attendsTo: string;
+  maxClients: string;
+  detailedServices: ServiceItem[];
   services: string[];
   reviews: Review[];
 }
 
-export interface Review {
-  rating: number;
-  text: string;
-  timeAgo: string;
-}
+const defaultServices: ServiceItem[] = [
+  { name: "Sexo oral sem preservativo", does: true, description: "Realiza sexo oral sem preservativo." },
+  { name: "Sexo vaginal com preservativo", does: true, description: "Faz penetração vaginal com preservativo." },
+  { name: "Masturbação", does: true, description: "Realiza masturbação." },
+  { name: "Massagem tradicional", does: true, description: "Realiza massagem relaxante." },
+  { name: "Dominação", does: false, description: "Conjunto de comportamentos que envolvem submissão e dominação." },
+  { name: "Penetração com acessórios", does: false, description: "Faz penetração com acessórios sexuais." },
+  { name: "Beijo grego", does: false, description: "Carícias no ânus com a boca." },
+  { name: "Podolatria", does: false, description: "Fetiche envolvendo pés." },
+  { name: "Chuva dourada", does: false, description: "Prática de urofilia." },
+  { name: "Acompanhante", does: true, description: "Acompanha em jantares, eventos e viagens." },
+];
+
+const servicesSet1: ServiceItem[] = [
+  { name: "Sexo oral sem preservativo", does: true, description: "Realiza sexo oral sem preservativo." },
+  { name: "Sexo vaginal com preservativo", does: true, description: "Faz penetração vaginal com preservativo." },
+  { name: "Masturbação", does: true, description: "Realiza masturbação." },
+  { name: "Massagem tradicional", does: true, description: "Realiza massagem relaxante." },
+  { name: "Dominação", does: true, description: "Conjunto de comportamentos que envolvem submissão e dominação." },
+  { name: "Penetração com acessórios", does: true, description: "Faz penetração com acessórios sexuais." },
+  { name: "Beijo grego", does: true, description: "Carícias no ânus com a boca." },
+  { name: "Podolatria", does: true, description: "Fetiche envolvendo pés." },
+  { name: "Chuva dourada", does: false, description: "Prática de urofilia." },
+  { name: "Acompanhante", does: true, description: "Acompanha em jantares, eventos e viagens." },
+];
 
 export const mockProfiles: Profile[] = [
   {
@@ -75,6 +110,9 @@ export const mockProfiles: Profile[] = [
     location: "Jardins, São Paulo - SP",
     hasOwnPlace: true,
     attendsTo: "Homens e mulheres",
+    maxClients: "apenas 1 cliente",
+    verifiedDate: "Mar/2026",
+    detailedServices: servicesSet1,
     services: ["Massagem relaxante", "Jantar acompanhado", "Ensaio fotográfico", "Conteúdo exclusivo", "Videochamada"],
     reviews: [
       { rating: 5, text: "Atendimento incrível, super educada e carinhosa. Recomendo demais!", timeAgo: "há 2 semanas" },
@@ -116,6 +154,9 @@ export const mockProfiles: Profile[] = [
     location: "Copacabana, Rio de Janeiro - RJ",
     hasOwnPlace: true,
     attendsTo: "Homens",
+    maxClients: "apenas 1 cliente",
+    verifiedDate: "Fev/2026",
+    detailedServices: defaultServices,
     services: ["Massagem relaxante", "Jantar acompanhado", "Conteúdo exclusivo", "Viagens"],
     reviews: [
       { rating: 5, text: "Simplesmente perfeita! Super recomendo.", timeAgo: "há 1 semana" },
@@ -156,6 +197,9 @@ export const mockProfiles: Profile[] = [
     location: "Savassi, Belo Horizonte - MG",
     hasOwnPlace: true,
     attendsTo: "Homens",
+    maxClients: "apenas 1 cliente",
+    verifiedDate: "Fev/2026",
+    detailedServices: defaultServices,
     services: ["Massagem relaxante", "Conteúdo exclusivo", "Videochamada"],
     reviews: [
       { rating: 5, text: "Linda demais! Fotos 100% reais.", timeAgo: "há 2 semanas" },
@@ -195,6 +239,9 @@ export const mockProfiles: Profile[] = [
     location: "Batel, Curitiba - PR",
     hasOwnPlace: false,
     attendsTo: "Homens e casais",
+    maxClients: "até 2 clientes",
+    verifiedDate: "Jan/2026",
+    detailedServices: servicesSet1,
     services: ["Conteúdo exclusivo", "Vídeos personalizados", "Videochamada"],
     reviews: [
       { rating: 5, text: "Ótima profissional!", timeAgo: "há 3 semanas" },
@@ -234,6 +281,9 @@ export const mockProfiles: Profile[] = [
     location: "Asa Sul, Brasília - DF",
     hasOwnPlace: true,
     attendsTo: "Homens",
+    maxClients: "apenas 1 cliente",
+    verifiedDate: "Fev/2026",
+    detailedServices: defaultServices,
     services: ["Massagem relaxante", "Jantar acompanhado", "Conteúdo exclusivo", "Viagens"],
     reviews: [
       { rating: 5, text: "Muito elegante e educada!", timeAgo: "há 1 semana" },
@@ -273,6 +323,9 @@ export const mockProfiles: Profile[] = [
     location: "Barra, Salvador - BA",
     hasOwnPlace: true,
     attendsTo: "Homens e mulheres",
+    maxClients: "apenas 1 cliente",
+    verifiedDate: "Mar/2026",
+    detailedServices: servicesSet1,
     services: ["Dança privada", "Massagem relaxante", "Conteúdo exclusivo"],
     reviews: [
       { rating: 5, text: "Energia incrível, adorei!", timeAgo: "há 2 semanas" },
@@ -311,6 +364,9 @@ export const mockProfiles: Profile[] = [
     location: "Meireles, Fortaleza - CE",
     hasOwnPlace: false,
     attendsTo: "Homens",
+    maxClients: "apenas 1 cliente",
+    verifiedDate: "Fev/2026",
+    detailedServices: defaultServices,
     services: ["Massagem relaxante", "Conteúdo exclusivo"],
     reviews: [
       { rating: 4, text: "Muito simpática e bonita.", timeAgo: "há 1 mês" },
@@ -349,6 +405,9 @@ export const mockProfiles: Profile[] = [
     location: "Boa Viagem, Recife - PE",
     hasOwnPlace: true,
     attendsTo: "Homens",
+    maxClients: "apenas 1 cliente",
+    verifiedDate: "Fev/2026",
+    detailedServices: defaultServices,
     services: ["Jantar acompanhado", "Conteúdo exclusivo", "Vídeos personalizados", "Viagens"],
     reviews: [
       { rating: 5, text: "Perfeita em tudo! Ambiente impecável.", timeAgo: "há 1 semana" },
