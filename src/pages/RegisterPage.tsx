@@ -94,8 +94,6 @@ const RegisterPage = () => {
                     required
                   />
                 </div>
-                <div>
-                <div>
                   <Label htmlFor="description">Sobre você</Label>
                   <Textarea
                     id="description"
