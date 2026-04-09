@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X as XIcon, User, LogIn, UserCheck, Heart, LogOut } from "lucide-react";
+import { Menu, X as XIcon, User, LogIn, UserCheck, Heart, LogOut, Edit } from "lucide-react";
 import { useFavorites } from "@/hooks/useFavorites";
 import {
   Dialog,
@@ -62,6 +62,9 @@ const Navbar = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => navigate("/meu-perfil")} className="gap-2 cursor-pointer">
+                      <Edit className="h-4 w-4" /> Meu Perfil
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer">
                       <LogOut className="h-4 w-4" /> Sair
                     </DropdownMenuItem>
@@ -93,6 +96,11 @@ const Navbar = () => {
                   <p className="text-sm text-muted-foreground px-2">
                     Olá, {user.user_metadata?.full_name || user.email?.split("@")[0]}
                   </p>
+                  <Link to="/meu-perfil" className="block" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full gap-2">
+                      <Edit className="h-4 w-4" /> Meu Perfil
+                    </Button>
+                  </Link>
                   <Button variant="outline" className="w-full gap-2" onClick={() => { setIsOpen(false); handleSignOut(); }}>
                     <LogOut className="h-4 w-4" /> Sair
                   </Button>
