@@ -36,6 +36,7 @@ const ProfileDetail = () => {
   const profile = mockProfiles.find((p) => p.id === id);
   const [activeTab, setActiveTab] = useState<"fotos" | "sobre" | "avaliacoes">("fotos");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [expandedService, setExpandedService] = useState<string | null>(null);
 
   if (!profile) {
     return (
