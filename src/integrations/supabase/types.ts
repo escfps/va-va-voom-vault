@@ -67,6 +67,7 @@ export type Database = {
           tags: string[] | null
           tattoos: boolean | null
           updated_at: string
+          user_id: string | null
           verified: boolean | null
           verified_date: string | null
           weight: string | null
@@ -123,6 +124,7 @@ export type Database = {
           tags?: string[] | null
           tattoos?: boolean | null
           updated_at?: string
+          user_id?: string | null
           verified?: boolean | null
           verified_date?: string | null
           weight?: string | null
@@ -179,6 +181,7 @@ export type Database = {
           tags?: string[] | null
           tattoos?: boolean | null
           updated_at?: string
+          user_id?: string | null
           verified?: boolean | null
           verified_date?: string | null
           weight?: string | null
