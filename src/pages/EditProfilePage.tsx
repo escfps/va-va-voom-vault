@@ -12,12 +12,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Camera, X, Loader2, Save, Trash2 } from "lucide-react";
+import { Camera, X, Loader2, Save, Trash2, Video } from "lucide-react";
+import ScheduleSection, { defaultSchedule, scheduleToDb, dbToSchedule } from "@/components/register/ScheduleSection";
+import ServicesSection, { defaultServices, servicesToDb, dbToServices } from "@/components/register/ServicesSection";
+import PaymentSection from "@/components/register/PaymentSection";
 
 const EditProfilePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -25,6 +29,12 @@ const EditProfilePage = () => {
   const [newPhotos, setNewPhotos] = useState<File[]>([]);
   const [newPreviews, setNewPreviews] = useState<string[]>([]);
   const [removedImages, setRemovedImages] = useState<string[]>([]);
+  const [verificationVideo, setVerificationVideo] = useState<File | null>(null);
+
+  const [schedule, setSchedule] = useState(defaultSchedule);
+  const [services, setServices] = useState(defaultServices);
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(["Dinheiro", "PIX"]);
+  const [pricing, setPricing] = useState([{ duration: "1 hora", price: "" }]);
 
   const [form, setForm] = useState({
     name: "",
@@ -62,20 +72,31 @@ const EditProfilePage = () => {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (error) {
-        console.error(error);
-        toast.error("Erro ao carregar perfil");
-        setLoading(false);
-        return;
-      }
-
-      if (!data) {
-        setLoading(false);
-        return;
-      }
+      if (error) { console.error(error); toast.error("Erro ao carregar perfil"); setLoading(false); return; }
+      if (!data) { setLoading(false); return; }
 
       setProfileId(data.id);
       setExistingImages(data.images || []);
+
+      // Load schedule
+      if (data.schedule && Array.isArray(data.schedule)) {
+        setSchedule(dbToSchedule(data.schedule as { day: string; hours: string | null }[]));
+      }
+      // Load services
+      if (data.detailed_services && Array.isArray(data.detailed_services)) {
+        setServices(dbToServices(data.detailed_services as { name: string; does: boolean; description: string }[]));
+      }
+      // Load payment methods
+      if (data.payment_methods) setPaymentMethods(data.payment_methods);
+      // Load pricing
+      if (data.pricing && Array.isArray(data.pricing)) {
+        const pricingData = (data.pricing as { duration: string; price: number }[]).map((p) => ({
+          duration: p.duration,
+          price: String(p.price),
+        }));
+        if (pricingData.length > 0) setPricing(pricingData);
+      }
+
       setForm({
         name: data.name || "",
         age: String(data.age || ""),
@@ -107,18 +128,13 @@ const EditProfilePage = () => {
   const handleNewPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const totalImages = existingImages.length - removedImages.length + newPhotos.length + files.length;
-    if (totalImages > 10) {
-      toast.error("Máximo de 10 fotos permitidas");
-      return;
-    }
+    if (totalImages > 10) { toast.error("Máximo de 10 fotos permitidas"); return; }
     setNewPhotos((prev) => [...prev, ...files]);
     const previews = files.map((f) => URL.createObjectURL(f));
     setNewPreviews((prev) => [...prev, ...previews]);
   };
 
-  const removeExistingImage = (url: string) => {
-    setRemovedImages((prev) => [...prev, url]);
-  };
+  const removeExistingImage = (url: string) => setRemovedImages((prev) => [...prev, url]);
 
   const removeNewPhoto = (index: number) => {
     URL.revokeObjectURL(newPreviews[index]);
@@ -132,13 +148,8 @@ const EditProfilePage = () => {
     for (const photo of newPhotos) {
       const ext = photo.name.split(".").pop();
       const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage
-        .from("model-photos")
-        .upload(path, photo, { cacheControl: "3600", upsert: false });
-      if (error) {
-        console.error("Upload error:", error);
-        continue;
-      }
+      const { error } = await supabase.storage.from("model-photos").upload(path, photo, { cacheControl: "3600", upsert: false });
+      if (error) { console.error("Upload error:", error); continue; }
       const { data: urlData } = supabase.storage.from("model-photos").getPublicUrl(path);
       urls.push(urlData.publicUrl);
     }
@@ -157,11 +168,9 @@ const EditProfilePage = () => {
         ...uploadedUrls,
       ];
 
-      if (finalImages.length === 0) {
-        toast.error("Adicione pelo menos 1 foto");
-        setSaving(false);
-        return;
-      }
+      if (finalImages.length === 0) { toast.error("Adicione pelo menos 1 foto"); setSaving(false); return; }
+
+      const pricingDb = pricing.filter((p) => p.price).map((p) => ({ duration: p.duration, price: parseInt(p.price) }));
 
       const { error } = await supabase
         .from("profiles")
@@ -193,6 +202,11 @@ const EditProfilePage = () => {
           smoker: form.smoker,
           location: `${form.city} - ${form.state}`,
           places_served: form.hasOwnPlace ? "Local próprio" : "Hotéis e motéis",
+          schedule: scheduleToDb(schedule),
+          detailed_services: servicesToDb(services),
+          services: services.filter((s) => s.does).map((s) => s.name),
+          pricing: pricingDb,
+          payment_methods: paymentMethods,
         })
         .eq("id", profileId);
 
@@ -216,12 +230,7 @@ const EditProfilePage = () => {
   const handleDelete = async () => {
     if (!profileId || !confirm("Tem certeza que deseja excluir seu perfil? Essa ação não pode ser desfeita.")) return;
     const { error } = await supabase.from("profiles").delete().eq("id", profileId);
-    if (error) {
-      toast.error("Erro ao excluir perfil");
-    } else {
-      toast.success("Perfil excluído");
-      navigate("/");
-    }
+    if (error) { toast.error("Erro ao excluir perfil"); } else { toast.success("Perfil excluído"); navigate("/"); }
   };
 
   if (!user) {
@@ -283,7 +292,7 @@ const EditProfilePage = () => {
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Editar Meu Perfil</CardTitle>
-              <CardDescription>Atualize seus dados e fotos a qualquer momento</CardDescription>
+              <CardDescription>Atualize seus dados, fotos, serviços e horários a qualquer momento</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -295,20 +304,11 @@ const EditProfilePage = () => {
                     <Input id="name" value={form.name} onChange={(e) => update("name", e.target.value)} required />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="age">Idade *</Label>
-                      <Input id="age" type="number" min="18" max="60" value={form.age} onChange={(e) => update("age", e.target.value)} required />
-                    </div>
-                    <div>
-                      <Label htmlFor="phone">WhatsApp *</Label>
-                      <Input id="phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} required />
-                    </div>
+                    <div><Label htmlFor="age">Idade *</Label><Input id="age" type="number" min="18" max="60" value={form.age} onChange={(e) => update("age", e.target.value)} required /></div>
+                    <div><Label htmlFor="phone">WhatsApp *</Label><Input id="phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} required /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="city">Cidade *</Label>
-                      <Input id="city" value={form.city} onChange={(e) => update("city", e.target.value)} required />
-                    </div>
+                    <div><Label htmlFor="city">Cidade *</Label><Input id="city" value={form.city} onChange={(e) => update("city", e.target.value)} required /></div>
                     <div>
                       <Label htmlFor="state">Estado *</Label>
                       <Select value={form.state} onValueChange={(v) => update("state", v)}>
@@ -321,54 +321,31 @@ const EditProfilePage = () => {
                       </Select>
                     </div>
                   </div>
-                  <div>
-                    <Label htmlFor="tagline">Frase de destaque</Label>
-                    <Input id="tagline" value={form.tagline} onChange={(e) => update("tagline", e.target.value)} />
-                  </div>
-                  <div>
-                    <Label htmlFor="description">Sobre você *</Label>
-                    <Textarea id="description" value={form.description} onChange={(e) => update("description", e.target.value)} rows={4} required />
-                  </div>
-                  <div>
-                    <Label htmlFor="price">Valor por hora (R$) *</Label>
-                    <Input id="price" type="number" min="50" value={form.price} onChange={(e) => update("price", e.target.value)} required />
-                  </div>
+                  <div><Label htmlFor="tagline">Frase de destaque</Label><Input id="tagline" value={form.tagline} onChange={(e) => update("tagline", e.target.value)} /></div>
+                  <div><Label htmlFor="description">Sobre você *</Label><Textarea id="description" value={form.description} onChange={(e) => update("description", e.target.value)} rows={4} required /></div>
+                  <div><Label htmlFor="price">Valor por hora (R$) *</Label><Input id="price" type="number" min="50" value={form.price} onChange={(e) => update("price", e.target.value)} required /></div>
                 </div>
 
                 {/* Appearance */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-foreground border-b border-border pb-2">Aparência</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Altura</Label>
-                      <Input value={form.height} onChange={(e) => update("height", e.target.value)} placeholder="1,70 m" />
-                    </div>
-                    <div>
-                      <Label>Peso</Label>
-                      <Input value={form.weight} onChange={(e) => update("weight", e.target.value)} placeholder="55 kg" />
-                    </div>
+                    <div><Label>Altura</Label><Input value={form.height} onChange={(e) => update("height", e.target.value)} placeholder="1,70 m" /></div>
+                    <div><Label>Peso</Label><Input value={form.weight} onChange={(e) => update("weight", e.target.value)} placeholder="55 kg" /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Etnia</Label>
                       <Select value={form.ethnicity} onValueChange={(v) => update("ethnicity", v)}>
                         <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          {["Branca", "Morena", "Negra", "Asiática", "Indígena", "Outra"].map((e) => (
-                            <SelectItem key={e} value={e}>{e}</SelectItem>
-                          ))}
-                        </SelectContent>
+                        <SelectContent>{["Branca", "Morena", "Negra", "Asiática", "Indígena", "Outra"].map((e) => (<SelectItem key={e} value={e}>{e}</SelectItem>))}</SelectContent>
                       </Select>
                     </div>
                     <div>
                       <Label>Cor dos olhos</Label>
                       <Select value={form.eyeColor} onValueChange={(v) => update("eyeColor", v)}>
                         <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          {["Castanho", "Verde", "Azul", "Mel", "Preto"].map((c) => (
-                            <SelectItem key={c} value={c}>{c}</SelectItem>
-                          ))}
-                        </SelectContent>
+                        <SelectContent>{["Castanho", "Verde", "Azul", "Mel", "Preto"].map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}</SelectContent>
                       </Select>
                     </div>
                   </div>
@@ -377,22 +354,14 @@ const EditProfilePage = () => {
                       <Label>Cor do cabelo</Label>
                       <Select value={form.hairColor} onValueChange={(v) => update("hairColor", v)}>
                         <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          {["Loira", "Castanha", "Ruiva", "Preta", "Colorido"].map((c) => (
-                            <SelectItem key={c} value={c}>{c}</SelectItem>
-                          ))}
-                        </SelectContent>
+                        <SelectContent>{["Loira", "Castanha", "Ruiva", "Preta", "Colorido"].map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}</SelectContent>
                       </Select>
                     </div>
                     <div>
                       <Label>Comprimento</Label>
                       <Select value={form.hairLength} onValueChange={(v) => update("hairLength", v)}>
                         <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          {["Curto", "Médio", "Longo"].map((l) => (
-                            <SelectItem key={l} value={l}>{l}</SelectItem>
-                          ))}
-                        </SelectContent>
+                        <SelectContent>{["Curto", "Médio", "Longo"].map((l) => (<SelectItem key={l} value={l}>{l}</SelectItem>))}</SelectContent>
                       </Select>
                     </div>
                   </div>
@@ -401,22 +370,14 @@ const EditProfilePage = () => {
                       <Label>Gênero</Label>
                       <Select value={form.gender} onValueChange={(v) => update("gender", v)}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {["Mulher", "Homem", "Trans", "Outro"].map((g) => (
-                            <SelectItem key={g} value={g}>{g}</SelectItem>
-                          ))}
-                        </SelectContent>
+                        <SelectContent>{["Mulher", "Homem", "Trans", "Outro"].map((g) => (<SelectItem key={g} value={g}>{g}</SelectItem>))}</SelectContent>
                       </Select>
                     </div>
                     <div>
                       <Label>Atende</Label>
                       <Select value={form.attendsTo} onValueChange={(v) => update("attendsTo", v)}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {["Homens", "Mulheres", "Homens e mulheres", "Homens e casais", "Todos"].map((a) => (
-                            <SelectItem key={a} value={a}>{a}</SelectItem>
-                          ))}
-                        </SelectContent>
+                        <SelectContent>{["Homens", "Mulheres", "Homens e mulheres", "Homens e casais", "Todos"].map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}</SelectContent>
                       </Select>
                     </div>
                   </div>
@@ -436,11 +397,33 @@ const EditProfilePage = () => {
                   </div>
                 </div>
 
+                {/* Services */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-foreground border-b border-border pb-2">Serviços oferecidos</h3>
+                  <ServicesSection services={services} onChange={setServices} />
+                </div>
+
+                {/* Schedule */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-foreground border-b border-border pb-2">Horários de atendimento</h3>
+                  <ScheduleSection schedule={schedule} onChange={setSchedule} />
+                </div>
+
+                {/* Pricing & Payment */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-foreground border-b border-border pb-2">Valores e Pagamento</h3>
+                  <PaymentSection
+                    paymentMethods={paymentMethods}
+                    onPaymentMethodsChange={setPaymentMethods}
+                    pricing={pricing}
+                    onPricingChange={setPricing}
+                  />
+                </div>
+
                 {/* Photos */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-foreground border-b border-border pb-2">Suas fotos</h3>
                   <p className="text-sm text-muted-foreground">Até 10 fotos. A primeira será sua foto principal.</p>
-
                   <div className="grid grid-cols-3 gap-3">
                     {activeImages.map((src, i) => (
                       <div key={src} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-border">
@@ -448,11 +431,7 @@ const EditProfilePage = () => {
                         {i === 0 && newPhotos.length === 0 && (
                           <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">Principal</span>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => removeExistingImage(src)}
-                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
-                        >
+                        <button type="button" onClick={() => removeExistingImage(src)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -461,49 +440,53 @@ const EditProfilePage = () => {
                       <div key={`new-${i}`} className="relative aspect-[3/4] rounded-lg overflow-hidden border-2 border-primary/30">
                         <img src={src} alt={`Nova foto ${i + 1}`} className="w-full h-full object-cover" />
                         <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">Nova</span>
-                        <button
-                          type="button"
-                          onClick={() => removeNewPhoto(i)}
-                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
-                        >
+                        <button type="button" onClick={() => removeNewPhoto(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     ))}
                     {totalImages < 10 && (
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="aspect-[3/4] rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <Camera className="h-6 w-6" />
-                        <span className="text-xs">Adicionar</span>
+                      <button type="button" onClick={() => fileInputRef.current?.click()} className="aspect-[3/4] rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                        <Camera className="h-6 w-6" /><span className="text-xs">Adicionar</span>
                       </button>
                     )}
                   </div>
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleNewPhotos} />
+                </div>
 
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleNewPhotos}
-                  />
+                {/* Verification Video */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-foreground border-b border-border pb-2 flex items-center gap-2">
+                    <Video className="h-4 w-4 text-primary" /> Vídeo de verificação (opcional)
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Grave um vídeo curto mostrando seu rosto para verificar que você é real. Isso aumenta a confiança dos clientes.
+                  </p>
+                  {verificationVideo ? (
+                    <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
+                      <Video className="h-5 w-5 text-primary" />
+                      <span className="text-sm text-foreground flex-1 truncate">{verificationVideo.name}</span>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setVerificationVideo(null)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button type="button" variant="outline" className="gap-2" onClick={() => videoInputRef.current?.click()}>
+                      <Video className="h-4 w-4" /> Enviar vídeo
+                    </Button>
+                  )}
+                  <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setVerificationVideo(file);
+                  }} />
                 </div>
 
                 {/* Actions */}
                 <div className="flex flex-col gap-3 pt-4">
                   <Button type="submit" className="w-full gap-2" disabled={saving}>
-                    {saving ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Salvando...</>
-                    ) : (
-                      <><Save className="h-4 w-4" /> Salvar alterações</>
-                    )}
+                    {saving ? (<><Loader2 className="h-4 w-4 animate-spin" /> Salvando...</>) : (<><Save className="h-4 w-4" /> Salvar alterações</>)}
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => navigate(`/perfil/${profileId}`)}>
-                    Ver meu perfil
-                  </Button>
+                  <Button type="button" variant="outline" onClick={() => navigate(`/perfil/${profileId}`)}>Ver meu perfil</Button>
                   <Button type="button" variant="destructive" className="gap-2" onClick={handleDelete}>
                     <Trash2 className="h-4 w-4" /> Excluir perfil
                   </Button>
