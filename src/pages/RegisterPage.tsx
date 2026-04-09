@@ -12,10 +12,57 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Camera, X, Upload, Loader2, Video } from "lucide-react";
+import { Camera, X, Upload, Loader2, Video, Check, Star, Zap } from "lucide-react";
 import ScheduleSection, { defaultSchedule, scheduleToDb } from "@/components/register/ScheduleSection";
 import ServicesSection, { defaultServices, servicesToDb } from "@/components/register/ServicesSection";
 import PaymentSection from "@/components/register/PaymentSection";
+
+const PLANS = [
+  {
+    id: "free",
+    name: "Gratuito",
+    price: null,
+    label: "R$ 0",
+    sublabel: "para sempre",
+    icon: <Zap className="h-5 w-5" />,
+    color: "border-border",
+    badgeColor: "bg-muted text-muted-foreground",
+    features: ["Até 3 fotos", "Sem vídeo de verificação", "Perfil básico visível"],
+    missing: ["Vídeo de verificação", "Destaque mensal", "Fotos ilimitadas"],
+  },
+  {
+    id: "monthly",
+    name: "Mensal",
+    price: 29.9,
+    label: "R$ 29,90",
+    sublabel: "por mês",
+    icon: <Star className="h-5 w-5" />,
+    color: "border-primary",
+    badgeColor: "bg-primary text-primary-foreground",
+    badge: "Mais popular",
+    features: ["Fotos ilimitadas", "Vídeo de verificação", "Destaque mensal", "Selo verificada"],
+    missing: [],
+  },
+  {
+    id: "yearly",
+    name: "Anual",
+    price: 199.9,
+    label: "R$ 199,90",
+    sublabel: "por ano • economize 44%",
+    icon: <Star className="h-5 w-5 fill-primary" />,
+    color: "border-yellow-500",
+    badgeColor: "bg-yellow-500 text-white",
+    badge: "Melhor valor",
+    features: [
+      "Fotos ilimitadas",
+      "Vídeo de verificação",
+      "Destaque mensal",
+      "Selo verificada",
+      "Prioridade no ranking",
+    ],
+    missing: [],
+  },
+];
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -27,7 +74,8 @@ const RegisterPage = () => {
   const [previews, setPreviews] = useState<string[]>([]);
   const [verificationVideo, setVerificationVideo] = useState<File | null>(null);
   const [step, setStep] = useState(1);
-  const totalSteps = 4;
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const totalSteps = 5;
 
   const [schedule, setSchedule] = useState(defaultSchedule);
   const [services, setServices] = useState(defaultServices);
@@ -60,10 +108,12 @@ const RegisterPage = () => {
 
   const update = (field: string, value: string | boolean) => setForm((prev) => ({ ...prev, [field]: value }));
 
+  const maxPhotos = selectedPlan === "free" ? 3 : 10;
+
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (photos.length + files.length > 10) {
-      toast.error("Máximo de 10 fotos permitidas");
+    if (photos.length + files.length > maxPhotos) {
+      toast.error(`Máximo de ${maxPhotos} fotos no plano ${selectedPlan === "free" ? "gratuito" : "selecionado"}`);
       return;
     }
     setPhotos((prev) => [...prev, ...files]);
@@ -107,8 +157,8 @@ const RegisterPage = () => {
       toast.error("Adicione pelo menos 1 foto");
       return;
     }
-    if (!verificationVideo) {
-      toast.error("O vídeo de verificação é obrigatório");
+    if (selectedPlan !== "free" && !verificationVideo) {
+      toast.error("O vídeo de verificação é obrigatório neste plano");
       return;
     }
 
@@ -123,9 +173,7 @@ const RegisterPage = () => {
 
       const mainPrice = pricing.find((p) => p.duration === "1 hora")?.price || form.price;
       const pricingDb = pricing.filter((p) => p.price).map((p) => ({ duration: p.duration, price: parseInt(p.price) }));
-      if (pricingDb.length === 0 && form.price) {
-        pricingDb.push({ duration: "1 hora", price: parseInt(form.price) });
-      }
+      if (pricingDb.length === 0 && form.price) pricingDb.push({ duration: "1 hora", price: parseInt(form.price) });
 
       const { error } = await supabase.from("profiles").insert({
         user_id: user.id,
@@ -166,7 +214,7 @@ const RegisterPage = () => {
         amenities: "",
         neighborhoods: [],
         max_clients: "apenas 1 cliente",
-        verified: false,
+        verified: selectedPlan !== "free",
         rating: 0,
         review_count: 0,
         tags: [],
@@ -177,10 +225,10 @@ const RegisterPage = () => {
         detailed_services: servicesToDb(services),
         services: services.filter((s) => s.does).map((s) => s.name),
         reviews: [],
+        plan: selectedPlan,
       });
 
       if (error) {
-        console.error("Insert error:", error);
         toast.error("Erro ao criar perfil: " + error.message);
       } else {
         toast.success("Perfil criado com sucesso! 🎉");
@@ -200,8 +248,8 @@ const RegisterPage = () => {
         <main className="flex-1 flex items-center justify-center">
           <Card className="max-w-md mx-4">
             <CardContent className="pt-6 text-center space-y-4">
-              <h2 className="text-xl font-bold text-foreground">Faça login para continuar</h2>
-              <p className="text-muted-foreground">Você precisa estar logado para cadastrar seu perfil de modelo.</p>
+              <h2 className="text-xl font-bold">Faça login para continuar</h2>
+              <p className="text-muted-foreground">Você precisa estar logado para cadastrar seu perfil.</p>
               <Button onClick={() => navigate("/login")} className="w-full">
                 Fazer login
               </Button>
@@ -229,7 +277,7 @@ const RegisterPage = () => {
                 {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
                   <div
                     key={s}
-                    className={`h-2 w-12 rounded-full transition-colors ${s <= step ? "bg-primary" : "bg-muted"}`}
+                    className={`h-2 w-10 rounded-full transition-colors ${s <= step ? "bg-primary" : "bg-muted"}`}
                   />
                 ))}
               </div>
@@ -239,7 +287,7 @@ const RegisterPage = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit}>
-                {/* Step 1: Basic info */}
+                {/* ── Step 1: Dados pessoais ── */}
                 {step === 1 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground">Dados pessoais</h3>
@@ -364,7 +412,7 @@ const RegisterPage = () => {
                   </div>
                 )}
 
-                {/* Step 2: Appearance */}
+                {/* ── Step 2: Aparência ── */}
                 {step === 2 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground">Aparência</h3>
@@ -510,7 +558,7 @@ const RegisterPage = () => {
                   </div>
                 )}
 
-                {/* Step 3: Services, Schedule, Payment */}
+                {/* ── Step 3: Serviços, Horários, Pagamento ── */}
                 {step === 3 && (
                   <div className="space-y-6">
                     <h3 className="font-semibold text-foreground">Serviços, Horários e Valores</h3>
@@ -537,12 +585,15 @@ const RegisterPage = () => {
                   </div>
                 )}
 
-                {/* Step 4: Photos & Video */}
+                {/* ── Step 4: Fotos & Vídeo ── */}
                 {step === 4 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground">Suas fotos</h3>
                     <p className="text-sm text-muted-foreground">
-                      Adicione até 10 fotos. A primeira será sua foto principal.
+                      Adicione até {maxPhotos} fotos. A primeira será sua foto principal.
+                      {selectedPlan === "free" && (
+                        <span className="text-yellow-600 font-medium"> (plano gratuito: máx. 3)</span>
+                      )}
                     </p>
 
                     <div className="grid grid-cols-3 gap-3">
@@ -563,7 +614,7 @@ const RegisterPage = () => {
                           </button>
                         </div>
                       ))}
-                      {photos.length < 10 && (
+                      {photos.length < maxPhotos && (
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
@@ -584,69 +635,159 @@ const RegisterPage = () => {
                       onChange={handlePhotos}
                     />
 
-                    {/* Verification Video */}
-                    <div className="border-t border-border pt-4 space-y-3">
-                      <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                        <Video className="h-4 w-4 text-primary" />
-                        Vídeo de verificação <span className="text-destructive font-semibold">* obrigatório</span>
-                      </h4>
-                      <p className="text-xs text-muted-foreground">
-                        Grave um vídeo curto mostrando seu rosto para verificar que você é real. Isso aumenta a
-                        confiança dos clientes.
-                      </p>
-                      {verificationVideo ? (
-                        <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
-                          <Video className="h-5 w-5 text-primary" />
-                          <span className="text-sm text-foreground flex-1 truncate">{verificationVideo.name}</span>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => setVerificationVideo(null)}>
-                            <X className="h-4 w-4" />
-                          </Button>
+                    {/* Vídeo — só para planos pagos */}
+                    {selectedPlan !== "free" ? (
+                      <div className="border-t border-border pt-4 space-y-3">
+                        <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+                          <Video className="h-4 w-4 text-primary" />
+                          Vídeo de verificação <span className="text-destructive font-semibold">* obrigatório</span>
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                          Grave um vídeo curto mostrando seu rosto para verificar que você é real.
+                        </p>
+                        {verificationVideo ? (
+                          <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
+                            <Video className="h-5 w-5 text-primary" />
+                            <span className="text-sm text-foreground flex-1 truncate">{verificationVideo.name}</span>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => setVerificationVideo(null)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="gap-2 border-destructive/40 hover:border-destructive"
+                              onClick={() => videoInputRef.current?.click()}
+                            >
+                              <Video className="h-4 w-4" /> Enviar vídeo
+                            </Button>
+                            <p className="text-xs text-destructive">
+                              Você não poderá publicar o perfil sem enviar o vídeo.
+                            </p>
+                          </div>
+                        )}
+                        <input
+                          ref={videoInputRef}
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setVerificationVideo(file);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="border-t border-border pt-4">
+                        <div className="flex items-center gap-3 p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/5">
+                          <Video className="h-5 w-5 text-yellow-600 shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-yellow-700">
+                              Vídeo não disponível no plano gratuito
+                            </p>
+                            <p className="text-xs text-yellow-600/80">
+                              Faça upgrade para o plano Mensal ou Anual e adicione vídeo ao seu perfil.
+                            </p>
+                          </div>
                         </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="gap-2 border-destructive/40 hover:border-destructive"
-                            onClick={() => videoInputRef.current?.click()}
-                          >
-                            <Video className="h-4 w-4" /> Enviar vídeo
-                          </Button>
-                          <p className="text-xs text-destructive">
-                            Você não poderá publicar o perfil sem enviar o vídeo.
-                          </p>
-                        </div>
-                      )}
-                      <input
-                        ref={videoInputRef}
-                        type="file"
-                        accept="video/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) setVerificationVideo(file);
-                        }}
-                      />
-                    </div>
+                      </div>
+                    )}
 
                     <div className="flex gap-3 pt-4">
                       <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(3)}>
                         Voltar
                       </Button>
                       <Button
-                        type="submit"
-                        className="flex-1 gap-2"
-                        disabled={loading || photos.length === 0 || !verificationVideo}
+                        type="button"
+                        className="flex-1"
+                        onClick={() => setStep(5)}
+                        disabled={photos.length === 0 || (selectedPlan !== "free" && !verificationVideo)}
                       >
+                        Próximo: Escolher plano
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Step 5: Planos ── */}
+                {step === 5 && (
+                  <div className="space-y-5">
+                    <div className="text-center">
+                      <h3 className="font-semibold text-foreground text-lg">Escolha seu plano</h3>
+                      <p className="text-sm text-muted-foreground mt-1">Você pode mudar de plano a qualquer momento</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      {PLANS.map((plan) => (
+                        <button
+                          key={plan.id}
+                          type="button"
+                          onClick={() => setSelectedPlan(plan.id)}
+                          className={`w-full text-left rounded-xl border-2 p-4 transition-all relative ${
+                            selectedPlan === plan.id
+                              ? plan.color + " ring-2 ring-offset-1 ring-primary/40 bg-primary/5"
+                              : "border-border hover:border-muted-foreground/40"
+                          }`}
+                        >
+                          {plan.badge && (
+                            <span
+                              className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full ${plan.badgeColor}`}
+                            >
+                              {plan.badge}
+                            </span>
+                          )}
+                          <div className="flex items-center gap-3 mb-3">
+                            <div
+                              className={`p-2 rounded-lg ${selectedPlan === plan.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                            >
+                              {plan.icon}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-foreground">{plan.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                <span className="font-bold text-foreground text-base">{plan.label}</span>{" "}
+                                <span className="text-xs">{plan.sublabel}</span>
+                              </p>
+                            </div>
+                            {selectedPlan === plan.id && (
+                              <div className="ml-auto w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                <Check className="h-3 w-3 text-primary-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <ul className="space-y-1.5">
+                            {plan.features.map((f) => (
+                              <li key={f} className="flex items-center gap-2 text-sm text-foreground">
+                                <Check className="h-3.5 w-3.5 text-green-500 shrink-0" /> {f}
+                              </li>
+                            ))}
+                            {plan.missing.map((f) => (
+                              <li
+                                key={f}
+                                className="flex items-center gap-2 text-sm text-muted-foreground/60 line-through"
+                              >
+                                <X className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" /> {f}
+                              </li>
+                            ))}
+                          </ul>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(4)}>
+                        Voltar
+                      </Button>
+                      <Button type="submit" className="flex-1 gap-2" disabled={loading || !selectedPlan}>
                         {loading ? (
                           <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Criando perfil...
+                            <Loader2 className="h-4 w-4 animate-spin" /> Criando perfil...
                           </>
                         ) : (
                           <>
-                            <Upload className="h-4 w-4" />
-                            Publicar perfil
+                            <Upload className="h-4 w-4" /> Publicar perfil
                           </>
                         )}
                       </Button>
