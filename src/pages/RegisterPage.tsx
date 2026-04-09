@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from "@/hooks/use-toast";
 
 const RegisterPage = () => {
+  const [searchParams] = useSearchParams();
+  const tipo = searchParams.get("tipo");
+  const isCliente = tipo === "cliente";
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -94,15 +98,17 @@ const RegisterPage = () => {
                     required
                   />
                 </div>
-                <div>
-                  <Label htmlFor="description">Sobre você</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => update("description", e.target.value)}
-                    rows={4}
-                  />
-                </div>
+                {!isCliente && (
+                  <div>
+                    <Label htmlFor="description">Sobre você</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => update("description", e.target.value)}
+                      rows={4}
+                    />
+                  </div>
+                )}
                 <Button
                   type="submit"
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
