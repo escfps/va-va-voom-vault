@@ -10,6 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from "@/hooks/use-toast";
 
 const RegisterPage = () => {
+  const [searchParams] = useSearchParams();
+  const tipo = searchParams.get("tipo");
+  const isCliente = tipo === "cliente";
   const [formData, setFormData] = useState({
     name: "",
     email: "",
