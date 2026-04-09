@@ -58,8 +58,7 @@ const RegisterPage = () => {
     smoker: false,
   });
 
-  const update = (field: string, value: string | boolean) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
+  const update = (field: string, value: string | boolean) => setForm((prev) => ({ ...prev, [field]: value }));
 
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -87,7 +86,10 @@ const RegisterPage = () => {
       const { error } = await supabase.storage
         .from("model-photos")
         .upload(path, photo, { cacheControl: "3600", upsert: false });
-      if (error) { console.error("Upload error:", error); continue; }
+      if (error) {
+        console.error("Upload error:", error);
+        continue;
+      }
       const { data: urlData } = supabase.storage.from("model-photos").getPublicUrl(path);
       urls.push(urlData.publicUrl);
     }
@@ -96,13 +98,24 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) { toast.error("Você precisa estar logado"); navigate("/login"); return; }
-    if (photos.length === 0) { toast.error("Adicione pelo menos 1 foto"); return; }
+    if (!user) {
+      toast.error("Você precisa estar logado");
+      navigate("/login");
+      return;
+    }
+    if (photos.length === 0) {
+      toast.error("Adicione pelo menos 1 foto");
+      return;
+    }
 
     setLoading(true);
     try {
       const imageUrls = await uploadPhotos();
-      if (imageUrls.length === 0) { toast.error("Erro ao fazer upload das fotos"); setLoading(false); return; }
+      if (imageUrls.length === 0) {
+        toast.error("Erro ao fazer upload das fotos");
+        setLoading(false);
+        return;
+      }
 
       const mainPrice = pricing.find((p) => p.duration === "1 hora")?.price || form.price;
       const pricingDb = pricing.filter((p) => p.price).map((p) => ({ duration: p.duration, price: parseInt(p.price) }));
@@ -185,8 +198,12 @@ const RegisterPage = () => {
             <CardContent className="pt-6 text-center space-y-4">
               <h2 className="text-xl font-bold text-foreground">Faça login para continuar</h2>
               <p className="text-muted-foreground">Você precisa estar logado para cadastrar seu perfil de modelo.</p>
-              <Button onClick={() => navigate("/login")} className="w-full">Fazer login</Button>
-              <Button variant="outline" onClick={() => navigate("/cadastro-usuario")} className="w-full">Criar conta</Button>
+              <Button onClick={() => navigate("/login")} className="w-full">
+                Fazer login
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/cadastro-usuario")} className="w-full">
+                Criar conta
+              </Button>
             </CardContent>
           </Card>
         </main>
@@ -206,10 +223,15 @@ const RegisterPage = () => {
               <CardDescription>Preencha seus dados e adicione suas melhores fotos</CardDescription>
               <div className="flex justify-center gap-2 mt-4">
                 {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
-                  <div key={s} className={`h-2 w-12 rounded-full transition-colors ${s <= step ? "bg-primary" : "bg-muted"}`} />
+                  <div
+                    key={s}
+                    className={`h-2 w-12 rounded-full transition-colors ${s <= step ? "bg-primary" : "bg-muted"}`}
+                  />
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Etapa {step} de {totalSteps}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Etapa {step} de {totalSteps}
+              </p>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit}>
@@ -219,16 +241,36 @@ const RegisterPage = () => {
                     <h3 className="font-semibold text-foreground">Dados pessoais</h3>
                     <div>
                       <Label htmlFor="name">Nome artístico *</Label>
-                      <Input id="name" value={form.name} onChange={(e) => update("name", e.target.value)} required placeholder="Como você quer ser chamada" />
+                      <Input
+                        id="name"
+                        value={form.name}
+                        onChange={(e) => update("name", e.target.value)}
+                        required
+                        placeholder="Como você quer ser chamada"
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="age">Idade *</Label>
-                        <Input id="age" type="number" min="18" max="60" value={form.age} onChange={(e) => update("age", e.target.value)} required />
+                        <Input
+                          id="age"
+                          type="number"
+                          min="18"
+                          max="60"
+                          value={form.age}
+                          onChange={(e) => update("age", e.target.value)}
+                          required
+                        />
                       </div>
                       <div>
                         <Label htmlFor="phone">WhatsApp *</Label>
-                        <Input id="phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} required placeholder="(11) 99999-0000" />
+                        <Input
+                          id="phone"
+                          value={form.phone}
+                          onChange={(e) => update("phone", e.target.value)}
+                          required
+                          placeholder="(11) 99999-0000"
+                        />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -239,10 +281,42 @@ const RegisterPage = () => {
                       <div>
                         <Label htmlFor="state">Estado *</Label>
                         <Select value={form.state} onValueChange={(v) => update("state", v)}>
-                          <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue placeholder="UF" />
+                          </SelectTrigger>
                           <SelectContent>
-                            {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map((uf) => (
-                              <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                            {[
+                              "AC",
+                              "AL",
+                              "AP",
+                              "AM",
+                              "BA",
+                              "CE",
+                              "DF",
+                              "ES",
+                              "GO",
+                              "MA",
+                              "MT",
+                              "MS",
+                              "MG",
+                              "PA",
+                              "PB",
+                              "PR",
+                              "PE",
+                              "PI",
+                              "RJ",
+                              "RN",
+                              "RS",
+                              "RO",
+                              "RR",
+                              "SC",
+                              "SP",
+                              "SE",
+                              "TO",
+                            ].map((uf) => (
+                              <SelectItem key={uf} value={uf}>
+                                {uf}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -250,15 +324,35 @@ const RegisterPage = () => {
                     </div>
                     <div>
                       <Label htmlFor="tagline">Frase de destaque</Label>
-                      <Input id="tagline" value={form.tagline} onChange={(e) => update("tagline", e.target.value)} placeholder="Ex: Loira fitness com atendimento premium" />
+                      <Input
+                        id="tagline"
+                        value={form.tagline}
+                        onChange={(e) => update("tagline", e.target.value)}
+                        placeholder="Ex: Loira fitness com atendimento premium"
+                      />
                     </div>
                     <div>
                       <Label htmlFor="description">Sobre você *</Label>
-                      <Textarea id="description" value={form.description} onChange={(e) => update("description", e.target.value)} rows={4} required placeholder="Descreva você, seu atendimento e o que oferece..." />
+                      <Textarea
+                        id="description"
+                        value={form.description}
+                        onChange={(e) => update("description", e.target.value)}
+                        rows={4}
+                        required
+                        placeholder="Descreva você, seu atendimento e o que oferece..."
+                      />
                     </div>
                     <div>
                       <Label htmlFor="price">Valor por hora (R$) *</Label>
-                      <Input id="price" type="number" min="50" value={form.price} onChange={(e) => update("price", e.target.value)} required placeholder="300" />
+                      <Input
+                        id="price"
+                        type="number"
+                        min="50"
+                        value={form.price}
+                        onChange={(e) => update("price", e.target.value)}
+                        required
+                        placeholder="300"
+                      />
                     </div>
                     <Button type="button" className="w-full" onClick={() => setStep(2)}>
                       Próximo: Aparência
@@ -271,25 +365,51 @@ const RegisterPage = () => {
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground">Aparência</h3>
                     <div className="grid grid-cols-2 gap-4">
-                      <div><Label>Altura</Label><Input value={form.height} onChange={(e) => update("height", e.target.value)} placeholder="1,70 m" /></div>
-                      <div><Label>Peso</Label><Input value={form.weight} onChange={(e) => update("weight", e.target.value)} placeholder="55 kg" /></div>
+                      <div>
+                        <Label>Altura</Label>
+                        <Input
+                          value={form.height}
+                          onChange={(e) => update("height", e.target.value)}
+                          placeholder="1,70 m"
+                        />
+                      </div>
+                      <div>
+                        <Label>Peso</Label>
+                        <Input
+                          value={form.weight}
+                          onChange={(e) => update("weight", e.target.value)}
+                          placeholder="55 kg"
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Etnia</Label>
                         <Select value={form.ethnicity} onValueChange={(v) => update("ethnicity", v)}>
-                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
-                            {["Branca", "Morena", "Negra", "Asiática", "Indígena", "Outra"].map((e) => (<SelectItem key={e} value={e}>{e}</SelectItem>))}
+                            {["Branca", "Morena", "Negra", "Asiática", "Indígena", "Outra"].map((e) => (
+                              <SelectItem key={e} value={e}>
+                                {e}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
                         <Label>Cor dos olhos</Label>
                         <Select value={form.eyeColor} onValueChange={(v) => update("eyeColor", v)}>
-                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
-                            {["Castanho", "Verde", "Azul", "Mel", "Preto"].map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                            {["Castanho", "Verde", "Azul", "Mel", "Preto"].map((c) => (
+                              <SelectItem key={c} value={c}>
+                                {c}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -298,18 +418,30 @@ const RegisterPage = () => {
                       <div>
                         <Label>Cor do cabelo</Label>
                         <Select value={form.hairColor} onValueChange={(v) => update("hairColor", v)}>
-                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
-                            {["Loira", "Castanha", "Ruiva", "Preta", "Colorido"].map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                            {["Loira", "Castanha", "Ruiva", "Preta", "Colorido"].map((c) => (
+                              <SelectItem key={c} value={c}>
+                                {c}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
                         <Label>Comprimento</Label>
                         <Select value={form.hairLength} onValueChange={(v) => update("hairLength", v)}>
-                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
-                            {["Curto", "Médio", "Longo"].map((l) => (<SelectItem key={l} value={l}>{l}</SelectItem>))}
+                            {["Curto", "Médio", "Longo"].map((l) => (
+                              <SelectItem key={l} value={l}>
+                                {l}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -318,18 +450,30 @@ const RegisterPage = () => {
                       <div>
                         <Label>Gênero</Label>
                         <Select value={form.gender} onValueChange={(v) => update("gender", v)}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
-                            {["Mulher", "Homem", "Trans", "Outro"].map((g) => (<SelectItem key={g} value={g}>{g}</SelectItem>))}
+                            {["Mulher", "Homem", "Trans", "Outro"].map((g) => (
+                              <SelectItem key={g} value={g}>
+                                {g}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
                         <Label>Atende</Label>
                         <Select value={form.attendsTo} onValueChange={(v) => update("attendsTo", v)}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
-                            {["Homens", "Mulheres", "Homens e mulheres", "Homens e casais", "Todos"].map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
+                            {["Homens", "Mulheres", "Homens e mulheres", "Homens e casais", "Todos"].map((a) => (
+                              <SelectItem key={a} value={a}>
+                                {a}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -344,13 +488,20 @@ const RegisterPage = () => {
                       ].map(({ key, label }) => (
                         <div key={key} className="flex items-center justify-between">
                           <Label>{label}</Label>
-                          <Switch checked={form[key as keyof typeof form] as boolean} onCheckedChange={(v) => update(key, v)} />
+                          <Switch
+                            checked={form[key as keyof typeof form] as boolean}
+                            onCheckedChange={(v) => update(key, v)}
+                          />
                         </div>
                       ))}
                     </div>
                     <div className="flex gap-3">
-                      <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(1)}>Voltar</Button>
-                      <Button type="button" className="flex-1" onClick={() => setStep(3)}>Próximo: Serviços</Button>
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(1)}>
+                        Voltar
+                      </Button>
+                      <Button type="button" className="flex-1" onClick={() => setStep(3)}>
+                        Próximo: Serviços
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -372,8 +523,12 @@ const RegisterPage = () => {
                       />
                     </div>
                     <div className="flex gap-3">
-                      <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(2)}>Voltar</Button>
-                      <Button type="button" className="flex-1" onClick={() => setStep(4)}>Próximo: Fotos</Button>
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(2)}>
+                        Voltar
+                      </Button>
+                      <Button type="button" className="flex-1" onClick={() => setStep(4)}>
+                        Próximo: Fotos
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -382,37 +537,57 @@ const RegisterPage = () => {
                 {step === 4 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground">Suas fotos</h3>
-                    <p className="text-sm text-muted-foreground">Adicione até 10 fotos. A primeira será sua foto principal.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Adicione até 10 fotos. A primeira será sua foto principal.
+                    </p>
 
                     <div className="grid grid-cols-3 gap-3">
                       {previews.map((src, i) => (
                         <div key={i} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-border">
                           <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
                           {i === 0 && (
-                            <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">Principal</span>
+                            <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">
+                              Principal
+                            </span>
                           )}
-                          <button type="button" onClick={() => removePhoto(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => removePhoto(i)}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                          >
                             <X className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       ))}
                       {photos.length < 10 && (
-                        <button type="button" onClick={() => fileInputRef.current?.click()} className="aspect-[3/4] rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="aspect-[3/4] rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+                        >
                           <Camera className="h-6 w-6" />
                           <span className="text-xs">Adicionar</span>
                         </button>
                       )}
                     </div>
 
-                    <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotos} />
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handlePhotos}
+                    />
 
                     {/* Verification Video */}
                     <div className="border-t border-border pt-4 space-y-3">
                       <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                        <Video className="h-4 w-4 text-primary" /> Vídeo de verificação (opcional)
+                        <Video className="h-4 w-4 text-primary" /> Vídeo de verificação (OBRIGATORIO)
                       </h4>
                       <p className="text-xs text-muted-foreground">
-                        Grave um vídeo curto mostrando seu rosto para verificar que você é real. Isso aumenta a confiança dos clientes.
+                        Grave um vídeo curto mostrando seu rosto para verificar que você é real. Isso aumenta a
+                        confiança dos clientes.
                       </p>
                       {verificationVideo ? (
                         <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
@@ -423,20 +598,43 @@ const RegisterPage = () => {
                           </Button>
                         </div>
                       ) : (
-                        <Button type="button" variant="outline" className="gap-2" onClick={() => videoInputRef.current?.click()}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="gap-2"
+                          onClick={() => videoInputRef.current?.click()}
+                        >
                           <Video className="h-4 w-4" /> Enviar vídeo
                         </Button>
                       )}
-                      <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) setVerificationVideo(file);
-                      }} />
+                      <input
+                        ref={videoInputRef}
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) setVerificationVideo(file);
+                        }}
+                      />
                     </div>
 
                     <div className="flex gap-3 pt-4">
-                      <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(3)}>Voltar</Button>
+                      <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(3)}>
+                        Voltar
+                      </Button>
                       <Button type="submit" className="flex-1 gap-2" disabled={loading || photos.length === 0}>
-                        {loading ? (<><Loader2 className="h-4 w-4 animate-spin" />Criando perfil...</>) : (<><Upload className="h-4 w-4" />Publicar perfil</>)}
+                        {loading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Criando perfil...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4" />
+                            Publicar perfil
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
