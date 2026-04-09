@@ -63,6 +63,8 @@ export interface Profile {
   maxClients: string;
   pricing: PriceItem[];
   paymentMethods: string[];
+  schedule: { day: string; hours: string | null }[];
+  profileCreatedAt: string;
   detailedServices: ServiceItem[];
   services: string[];
   reviews: Review[];
