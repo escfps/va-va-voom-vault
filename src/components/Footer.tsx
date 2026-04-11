@@ -19,7 +19,6 @@ const Footer = () => {
             <h4 className="font-semibold mb-4">Para Modelos</h4>
             <ul className="space-y-2 text-sm opacity-70">
               <li><Link to="/cadastro" className="hover:text-primary transition-colors">Cadastre-se</Link></li>
-              <li><Link to="/" className="hover:text-primary transition-colors">Como funciona</Link></li>
               <li><Link to="/" className="hover:text-primary transition-colors">Planos</Link></li>
             </ul>
           </div>

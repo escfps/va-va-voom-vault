@@ -14,6 +14,10 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import EditProfilePage from "./pages/EditProfilePage";
+import PlanosPage from "./pages/PlanosPage";
+import ContentDashboardPage from "./pages/ContentDashboardPage";
+import AdminPage from "./pages/AdminPage";
+import ContaPage from "./pages/ContaPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +40,10 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/favoritos" element={<FavoritesPage />} />
             <Route path="/meu-perfil" element={<EditProfilePage />} />
+            <Route path="/planos" element={<PlanosPage />} />
+            <Route path="/painel-criadora" element={<ContentDashboardPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/conta" element={<ContaPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

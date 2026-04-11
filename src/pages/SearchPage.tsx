@@ -19,15 +19,32 @@ const SearchPage = () => {
     queryFn: fetchProfiles,
   });
 
+  const PLAN_RANK: Record<string, number> = { yearly: 0, monthly: 1, free: 2 };
+
   const filtered = allProfiles.filter((p) => {
     if (!search.trim()) return true;
-    const q = search.toLowerCase();
+    const q = search.trim();
+
+    // Formato "Cidade - UF" vindo do autocomplete do IBGE
+    const parts = q.split(" - ");
+    if (parts.length >= 2) {
+      const cityQuery = parts[0].trim().toLowerCase();
+      const stateQuery = parts[1].trim().toLowerCase();
+      return (
+        p.city.toLowerCase().includes(cityQuery) &&
+        p.state.toLowerCase() === stateQuery
+      );
+    }
+
+    // Busca livre por cidade, nome ou tag
+    const qLower = q.toLowerCase();
     return (
-      p.city.toLowerCase().includes(q) ||
-      p.name.toLowerCase().includes(q) ||
-      p.tags.some((t) => t.toLowerCase().includes(q))
+      p.city.toLowerCase().includes(qLower) ||
+      p.state.toLowerCase().includes(qLower) ||
+      p.name.toLowerCase().includes(qLower) ||
+      p.tags.some((t) => t.toLowerCase().includes(qLower))
     );
-  });
+  }).sort((a, b) => (PLAN_RANK[a.plan] ?? 2) - (PLAN_RANK[b.plan] ?? 2));
 
   return (
     <div className="min-h-screen flex flex-col">

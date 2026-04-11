@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProfileById, fetchProfiles } from "@/lib/profiles";
 import Navbar from "@/components/Navbar";
@@ -10,11 +10,14 @@ import {
   ArrowLeft, MapPin, Star, CheckCircle, MessageCircle, Heart, Flag,
   Ruler, Weight, Eye, Scissors, Languages, Home, Users, Clock, Camera,
   User, MessageSquare, ChevronDown, ChevronUp, ShieldCheck, Video,
-  DollarSign, Banknote, CreditCard, Smartphone,
+  DollarSign, Banknote, CreditCard, Smartphone, Pencil,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ProfileDetail = () => {
   const { id } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", id],
     queryFn: () => fetchProfileById(id!),
@@ -95,6 +98,22 @@ const ProfileDetail = () => {
               <ArrowLeft className="h-4 w-4" /> Voltar
             </Link>
             <div className="flex gap-2">
+              {/* Botão de editar — visível só para o dono do perfil */}
+              {user && profile?.userId === user.id && (
+                <button
+                  onClick={() => {
+                    const types = profile.profileTypes ?? ["acompanhante"];
+                    if (types.includes("conteudo") && !types.includes("acompanhante")) {
+                      navigate("/painel-criadora");
+                    } else {
+                      navigate("/meu-perfil");
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                >
+                  <Pencil className="h-3.5 w-3.5" /> Editar perfil
+                </button>
+              )}
               <button className="bg-background/70 backdrop-blur p-2 rounded-lg hover:bg-background/90 transition-colors">
                 <Heart className="h-4 w-4 text-foreground" />
               </button>

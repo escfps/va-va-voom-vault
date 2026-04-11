@@ -27,6 +27,7 @@ export interface Profile {
   coverImage: string;
   price: number;
   priceDuration: string;
+  plan: string;
   verified: boolean;
   verifiedDate?: string;
   rating: number;
@@ -68,6 +69,8 @@ export interface Profile {
   detailedServices: ServiceItem[];
   services: string[];
   reviews: Review[];
+  profileTypes?: string[];
+  userId?: string;
 }
 
 const allServices: ServiceItem[] = [

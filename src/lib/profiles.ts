@@ -1,6 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Profile, ServiceItem, PriceItem, Review } from "@/data/mockProfiles";
 
+const PLAN_RANK: Record<string, number> = { yearly: 0, monthly: 1, free: 2 };
+
+function planRank(plan: string | null | undefined): number {
+  return PLAN_RANK[plan ?? "free"] ?? 2;
+}
+
 function mapDbToProfile(row: any): Profile {
   return {
     id: row.id,
@@ -14,6 +20,7 @@ function mapDbToProfile(row: any): Profile {
     coverImage: row.cover_image ?? "",
     price: row.price,
     priceDuration: row.price_duration ?? "1 hora",
+    plan: row.plan ?? "free",
     verified: row.verified ?? false,
     verifiedDate: row.verified_date ?? undefined,
     rating: Number(row.rating ?? 0),
@@ -55,21 +62,26 @@ function mapDbToProfile(row: any): Profile {
     detailedServices: (row.detailed_services as ServiceItem[]) ?? [],
     services: row.services ?? [],
     reviews: (row.reviews as Review[]) ?? [],
+    profileTypes: (row.tags ?? []).filter((t: string) => t === "acompanhante" || t === "conteudo").length > 0
+      ? (row.tags ?? []).filter((t: string) => t === "acompanhante" || t === "conteudo")
+      : ["acompanhante"],
+    userId: row.user_id ?? undefined,
   };
 }
 
 export async function fetchProfiles(): Promise<Profile[]> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("*")
-    .order("created_at", { ascending: true });
+    .select("*");
 
   if (error) {
     console.error("Error fetching profiles:", error);
     return [];
   }
 
-  return (data ?? []).map(mapDbToProfile);
+  return (data ?? [])
+    .map(mapDbToProfile)
+    .sort((a, b) => planRank(a.plan) - planRank(b.plan));
 }
 
 export async function fetchProfileById(id: string): Promise<Profile | null> {
@@ -97,12 +109,15 @@ export async function fetchProfilesByCity(city: string, excludeId?: string): Pro
     query = query.neq("id", excludeId);
   }
 
-  const { data, error } = await query.limit(3);
+  const { data, error } = await query.limit(20);
 
   if (error) {
     console.error("Error fetching profiles by city:", error);
     return [];
   }
 
-  return (data ?? []).map(mapDbToProfile);
+  return (data ?? [])
+    .map(mapDbToProfile)
+    .sort((a, b) => planRank(a.plan) - planRank(b.plan))
+    .slice(0, 3);
 }
