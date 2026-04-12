@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, MapPin, Star, CheckCircle, MessageCircle, Heart, Flag,
-  Ruler, Weight, Eye, Scissors, Languages, Home, Users, Clock, Camera,
+  Home, Users, Clock, Camera,
   User, MessageSquare, ChevronDown, ChevronUp, ShieldCheck, Video,
   DollarSign, Banknote, CreditCard, Smartphone, Pencil,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+
+const isVideoUrl = (url: string) => /\.(mp4|mov|webm|avi|mkv|m4v)(\?.*)?$/i.test(url);
 
 const ProfileDetail = () => {
   const { id } = useParams();
@@ -91,7 +93,11 @@ const ProfileDetail = () => {
       <main className="flex-1">
         {/* Cover */}
         <div className="relative h-48 md:h-72 overflow-hidden">
-          <img src={profile.coverImage} alt={`Capa de ${profile.name}`} className="w-full h-full object-cover" />
+          {isVideoUrl(profile.coverImage) ? (
+            <video src={profile.coverImage} className="w-full h-full object-cover" autoPlay muted loop playsInline />
+          ) : (
+            <img src={profile.coverImage} alt={`Capa de ${profile.name}`} className="w-full h-full object-cover" />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
           <div className="absolute top-4 left-4 right-4 flex justify-between">
             <Link to="/" className="inline-flex items-center gap-2 bg-background/70 backdrop-blur px-4 py-2 rounded-lg text-sm text-foreground hover:bg-background/90 transition-colors">
@@ -128,7 +134,11 @@ const ProfileDetail = () => {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-10">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <div className="w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-background overflow-hidden shadow-xl flex-shrink-0">
-              <img src={profile.image} alt={profile.name} className="w-full h-full object-cover" />
+              {isVideoUrl(profile.image) ? (
+                <video src={profile.image} className="w-full h-full object-cover" autoPlay muted loop playsInline />
+              ) : (
+                <img src={profile.image} alt={profile.name} className="w-full h-full object-cover" />
+              )}
             </div>
             <div className="flex-1 pt-2">
               <p className="text-sm text-muted-foreground mb-1">{profile.tagline}</p>
@@ -277,8 +287,12 @@ const ProfileDetail = () => {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {profile.images.map((img, i) => (
-                    <button key={i} onClick={() => setSelectedImage(img)} className="aspect-[3/4] rounded-xl overflow-hidden group">
-                      <img src={img} alt={`${profile.name} foto ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                    <button key={i} onClick={() => setSelectedImage(img)} className="aspect-[3/4] rounded-xl overflow-hidden group relative">
+                      {isVideoUrl(img) ? (
+                        <video src={img} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" muted playsInline />
+                      ) : (
+                        <img src={img} alt={`${profile.name} foto ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                      )}
                     </button>
                   ))}
                 </div>
@@ -604,7 +618,11 @@ const ProfileDetail = () => {
         {/* Lightbox */}
         {selectedImage && (
           <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
-            <img src={selectedImage} alt="Foto ampliada" className="max-w-full max-h-full object-contain rounded-lg" />
+            {isVideoUrl(selectedImage) ? (
+              <video src={selectedImage} className="max-w-full max-h-full rounded-lg" controls autoPlay onClick={(e) => e.stopPropagation()} />
+            ) : (
+              <img src={selectedImage} alt="Foto ampliada" className="max-w-full max-h-full object-contain rounded-lg" />
+            )}
           </div>
         )}
       </main>

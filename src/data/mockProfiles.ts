@@ -71,6 +71,7 @@ export interface Profile {
   reviews: Review[];
   profileTypes?: string[];
   userId?: string;
+  isActive: boolean;
 }
 
 const allServices: ServiceItem[] = [

@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Trash2, Loader2, Search, User, Heart, ShoppingBag, ExternalLink, Shield, Users, CheckCircle } from "lucide-react";
+import { Trash2, Loader2, Search, User, Heart, ShoppingBag, ExternalLink, Shield, Users, CheckCircle, Crown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ─── Configure o e-mail do administrador aqui ───────────────────────────────
 const ADMIN_EMAILS = ["bruno13@hotmail.com"];
@@ -39,6 +40,7 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [updatingPlanId, setUpdatingPlanId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<"all" | "acompanhante" | "conteudo">("all");
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email ?? "");
@@ -53,7 +55,7 @@ const AdminPage = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, name, age, city, state, tags, plan, verified, image, profile_created_at, user_id")
+      .select("*")
       .order("profile_created_at", { ascending: false });
 
     if (error) {
@@ -84,6 +86,41 @@ const AdminPage = () => {
 
     setFiltered(list);
   }, [search, filterType, profiles]);
+
+  const handleChangePlan = async (id: string, plan: string) => {
+    setUpdatingPlanId(id);
+    const expiresAt = plan === "free"
+      ? null
+      : new Date(Date.now() + (plan === "yearly" ? 365 : 30) * 24 * 60 * 60 * 1000).toISOString();
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token ?? supabaseKey;
+
+    const body: Record<string, string | null> = { plan };
+    if (expiresAt !== null) body.plan_expires_at = expiresAt;
+
+    const res = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": supabaseKey,
+        "Authorization": `Bearer ${token}`,
+        "Prefer": "return=minimal",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const msg = await res.text();
+      toast.error("Erro ao atualizar plano: " + msg);
+    } else {
+      toast.success(`Plano atualizado para ${plan === "yearly" ? "Anual" : plan === "monthly" ? "Mensal" : "Gratuito"}`);
+      setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, plan } : p));
+    }
+    setUpdatingPlanId(null);
+  };
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Excluir o perfil de "${name}"? Essa ação não pode ser desfeita.`)) return;
@@ -238,6 +275,23 @@ const AdminPage = () => {
 
                       {/* Actions */}
                       <div className="flex items-center gap-2 shrink-0">
+                        <Select
+                          value={profile.plan ?? "free"}
+                          onValueChange={(val) => handleChangePlan(profile.id, val)}
+                          disabled={updatingPlanId === profile.id}
+                        >
+                          <SelectTrigger className="h-8 text-xs w-28 gap-1">
+                            {updatingPlanId === profile.id
+                              ? <Loader2 className="h-3 w-3 animate-spin" />
+                              : <Crown className="h-3 w-3 text-yellow-500" />}
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="free">Gratuito</SelectItem>
+                            <SelectItem value="monthly">Mensal</SelectItem>
+                            <SelectItem value="yearly">Anual</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <Link to={`/perfil/${profile.id}`} target="_blank">
                           <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8">
                             <ExternalLink className="h-3.5 w-3.5" /> Ver

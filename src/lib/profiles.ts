@@ -66,6 +66,7 @@ function mapDbToProfile(row: any): Profile {
       ? (row.tags ?? []).filter((t: string) => t === "acompanhante" || t === "conteudo")
       : ["acompanhante"],
     userId: row.user_id ?? undefined,
+    isActive: row.is_active ?? true,
   };
 }
 

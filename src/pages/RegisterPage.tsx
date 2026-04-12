@@ -842,14 +842,18 @@ const RegisterPage = () => {
                 {/* ── Step 4: Fotos & Vídeo ── */}
                 {step === 4 && (
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground">Suas fotos</h3>
+                    <h3 className="font-semibold text-foreground">Suas fotos e vídeos</h3>
                     <p className="text-sm text-muted-foreground">
-                      Adicione até {maxPhotos} fotos. A primeira será sua foto principal.
+                      Adicione até {maxPhotos} mídias. A primeira será sua mídia principal.
                     </p>
                     <div className="grid grid-cols-3 gap-3">
                       {previews.map((src, i) => (
                         <div key={i} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-border">
-                          <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                          {photos[i]?.type.startsWith("video/") ? (
+                            <video src={src} className="w-full h-full object-cover" muted playsInline />
+                          ) : (
+                            <img src={src} alt={`Mídia ${i + 1}`} className="w-full h-full object-cover" />
+                          )}
                           {i === 0 && (
                             <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">
                               Principal
@@ -875,7 +879,7 @@ const RegisterPage = () => {
                         </button>
                       )}
                     </div>
-                    <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotos} />
+                    <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handlePhotos} />
 
                     <div className="border-t border-border pt-4 space-y-3">
                       <h4 className="text-sm font-medium text-foreground flex items-center gap-2">

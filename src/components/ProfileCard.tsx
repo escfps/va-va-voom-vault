@@ -32,12 +32,20 @@ const ProfileCard = ({
       className="group block bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
     >
       <div className="relative aspect-[3/4] overflow-hidden">
-        <img
-          src={image}
-          alt={name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-        />
+        {/\.(mp4|mov|webm|avi|mkv|m4v)(\?.*)?$/i.test(image) ? (
+          <video
+            src={image}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            autoPlay muted loop playsInline
+          />
+        ) : (
+          <img
+            src={image}
+            alt={name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+          />
+        )}
         <div className="absolute top-3 right-3 z-10">
           <FavoriteButton profileId={id} />
         </div>

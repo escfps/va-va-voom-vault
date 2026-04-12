@@ -150,12 +150,18 @@ const EditProfilePage = () => {
   }, [user]);
 
   const isPaidPlan = currentPlan === "monthly" || currentPlan === "yearly";
+  const isYearlyPlan = currentPlan === "yearly";
   const photoLimit = isPaidPlan ? Infinity : 3;
 
   const handleNewPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    const videoFiles = files.filter((f) => f.type.startsWith("video/"));
+    if (videoFiles.length > 0 && !isYearlyPlan) {
+      toast.error("Vídeo na foto de perfil e capa é exclusivo do Plano Anual. Faça upgrade para liberar.");
+      return;
+    }
     const totalImages = existingImages.length - removedImages.length + newPhotos.length + files.length;
-    if (totalImages > photoLimit) { toast.error("Plano Gratuito: máximo de 3 fotos. Faça upgrade para fotos ilimitadas."); return; }
+    if (totalImages > photoLimit) { toast.error("Plano Gratuito: máximo de 3 mídias. Faça upgrade para ilimitado."); return; }
     setNewPhotos((prev) => [...prev, ...files]);
     const previews = files.map((f) => URL.createObjectURL(f));
     setNewPreviews((prev) => [...prev, ...previews]);
@@ -283,7 +289,7 @@ const EditProfilePage = () => {
         ...uploadedUrls,
       ];
 
-      if (finalImages.length === 0) { toast.error("Adicione pelo menos 1 foto"); setSaving(false); return; }
+      if (finalImages.length === 0) { toast.error("Adicione pelo menos 1 foto ou vídeo"); setSaving(false); return; }
 
       const pricingDb = pricing.filter((p) => p.price).map((p) => ({ duration: p.duration, price: parseInt(p.price) }));
 
@@ -647,16 +653,22 @@ const EditProfilePage = () => {
 
                   {/* Photos */}
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground border-b border-border pb-2">Suas fotos</h3>
+                    <h3 className="font-semibold text-foreground border-b border-border pb-2">Suas fotos e vídeos</h3>
                     <p className="text-sm text-muted-foreground">
-                      {isPaidPlan
-                        ? "Fotos e vídeos ilimitados. A primeira será sua foto principal."
-                        : "Plano Gratuito: até 3 fotos. Faça upgrade para ilimitado."}
+                      {isYearlyPlan
+                        ? "Fotos e vídeos ilimitados. O primeiro será sua mídia principal (capa e avatar)."
+                        : isPaidPlan
+                        ? "Fotos ilimitadas. Vídeo como foto principal e capa requer o Plano Anual."
+                        : "Plano Gratuito: até 3 fotos. Vídeo como foto principal requer o Plano Anual."}
                     </p>
                     <div className="grid grid-cols-3 gap-3">
                       {activeImages.map((src, i) => (
                         <div key={src} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-border">
-                          <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                          {isVideoUrl(src) ? (
+                            <video src={src} className="w-full h-full object-cover" muted playsInline />
+                          ) : (
+                            <img src={src} alt={`Mídia ${i + 1}`} className="w-full h-full object-cover" />
+                          )}
                           {i === 0 && newPhotos.length === 0 && (
                             <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">Principal</span>
                           )}
@@ -667,7 +679,11 @@ const EditProfilePage = () => {
                       ))}
                       {newPreviews.map((src, i) => (
                         <div key={`new-${i}`} className="relative aspect-[3/4] rounded-lg overflow-hidden border-2 border-primary/30">
-                          <img src={src} alt={`Nova foto ${i + 1}`} className="w-full h-full object-cover" />
+                          {newPhotos[i]?.type.startsWith("video/") ? (
+                            <video src={src} className="w-full h-full object-cover" muted playsInline />
+                          ) : (
+                            <img src={src} alt={`Nova mídia ${i + 1}`} className="w-full h-full object-cover" />
+                          )}
                           <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">Nova</span>
                           <button type="button" onClick={() => removeNewPhoto(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
                             <X className="h-3.5 w-3.5" />
@@ -680,7 +696,13 @@ const EditProfilePage = () => {
                         </button>
                       )}
                     </div>
-                    <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleNewPhotos} />
+                    {!isYearlyPlan && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Crown className="h-3 w-3 text-yellow-500" />
+                        Vídeo como foto principal disponível apenas no <span className="text-primary font-medium">Plano Anual</span>
+                      </p>
+                    )}
+                    <input ref={fileInputRef} type="file" accept={isYearlyPlan ? "image/*,video/*" : "image/*"} multiple className="hidden" onChange={handleNewPhotos} />
                   </div>
 
                   {/* Verification Video */}
