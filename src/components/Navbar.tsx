@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X as XIcon, User, LogIn, UserCheck, Heart, LogOut, Crown, Check, Star, Zap, Loader2, Calendar, ShoppingBag, Shield } from "lucide-react";
+import { Menu, X as XIcon, User, LogIn, UserCheck, Heart, LogOut, Crown, Check, Star, Zap, Loader2, Calendar, ShoppingBag, Shield, Gift, Copy, Wallet } from "lucide-react";
 
 const ADMIN_EMAILS = ["bruno13@hotmail.com", "texasgramado@gmail.com"];
 import { useFavorites } from "@/hooks/useFavorites";
@@ -75,6 +75,9 @@ const Navbar = () => {
   const { favoriteIds } = useFavorites();
   const [planInfo, setPlanInfo] = useState<{ plan: string; expiresAt: string | null; profileId: string | null } | null>(null);
   const [profileTypes, setProfileTypes] = useState<string[]>([]);
+  const [referralCode, setReferralCode] = useState<string>("");
+  const [referralBalance, setReferralBalance] = useState<number>(0);
+  const [referralOpen, setReferralOpen] = useState(false);
 
   useEffect(() => {
     if (!user) { setPlanInfo(null); setProfileTypes([]); return; }
@@ -94,6 +97,8 @@ const Navbar = () => {
           expiresAt: (data as any).plan_expires_at || null,
           profileId: data.id,
         });
+        setReferralCode((data as any).referral_code || "");
+        setReferralBalance((data as any).referral_balance || 0);
         const types = ((data as any).tags ?? []).filter(
           (t: string) => t === "acompanhante" || t === "conteudo"
         );
@@ -184,6 +189,72 @@ const Navbar = () => {
               {/* ── Logged in + HAS profile ── */}
               {user && planInfo?.profileId && (
                 <>
+                  {/* Indicações */}
+                  <Popover open={referralOpen} onOpenChange={setReferralOpen}>
+                    <PopoverTrigger asChild>
+                      <button type="button" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:border-pink-400/60 hover:bg-pink-500/5 transition-all">
+                        <Gift className="h-3.5 w-3.5 text-pink-500 shrink-0" />
+                        <div>
+                          <p className="font-semibold text-foreground text-xs leading-tight">Indicações</p>
+                          <p className="text-[10px] leading-tight text-pink-500 font-medium">R$ {referralBalance.toFixed(2)}</p>
+                        </div>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-4 space-y-4" align="end" sideOffset={8}>
+                      <div>
+                        <p className="font-semibold text-foreground text-sm">Programa de Indicação</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Indique modelos e ganhe R$ 5,00 por cada plano ativado</p>
+                      </div>
+
+                      {/* Saldo */}
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border">
+                        <div className="flex items-center gap-2">
+                          <Wallet className="h-4 w-4 text-green-600" />
+                          <div>
+                            <p className="text-xs font-medium text-foreground">Saldo acumulado</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {referralBalance >= 100 ? "Pronto para sacar!" : `Faltam R$ ${(100 - referralBalance).toFixed(2)} para sacar`}
+                            </p>
+                          </div>
+                        </div>
+                        <p className={`text-lg font-bold ${referralBalance >= 100 ? "text-green-600" : "text-foreground"}`}>
+                          R$ {referralBalance.toFixed(2)}
+                        </p>
+                      </div>
+
+                      {referralBalance >= 100 && (
+                        <p className="text-xs text-green-600 bg-green-500/10 rounded-lg p-2">
+                          🎉 Saldo disponível! Entre em contato via WhatsApp para sacar via PIX.
+                        </p>
+                      )}
+
+                      {/* Link */}
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-medium text-foreground">Seu link de indicação</p>
+                        {referralCode ? (
+                          <div className="flex items-center gap-2">
+                            <p className="flex-1 text-xs text-muted-foreground bg-muted rounded-lg px-2 py-1.5 font-mono truncate">
+                              xmodelprive.com/cadastro?ref={referralCode}
+                            </p>
+                            <button
+                              onClick={() => { navigator.clipboard.writeText(`https://xmodelprive.com/cadastro?ref=${referralCode}`); toast.success("Link copiado!"); }}
+                              className="shrink-0 p-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Código será gerado em breve.</p>
+                        )}
+                      </div>
+
+                      <div className="text-xs text-muted-foreground space-y-0.5">
+                        <p>• R$ 5,00 por modelo que ativar qualquer plano</p>
+                        <p>• Saque disponível a partir de R$ 100,00</p>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
                   {/* Planos */}
                   <Popover open={planPopoverOpen} onOpenChange={(v) => { setPlanPopoverOpen(v); if (!v) setSelectedNewPlan(null); }}>
                     <PopoverTrigger asChild>

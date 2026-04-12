@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { notifyAdmin } from "@/lib/whatsapp";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -122,6 +123,8 @@ const PlanosPage = () => {
 
     if (isPaidPlan) {
       setPixStep(true);
+      const planLabel = selectedPlan === "yearly" ? "Anual (R$ 99,90)" : "Mensal (R$ 9,90)";
+      notifyAdmin(`💰 *Nova solicitação de pagamento PIX!*\n\nPlano: ${planLabel}\nPerfil ID: ${profileId ?? "desconhecido"}\nE-mail: ${user.email}\n\nAcesse o painel admin para verificar.`);
       return;
     }
 

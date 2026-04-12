@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sendWhatsApp } from "@/lib/whatsapp";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -104,6 +105,16 @@ const AdminPage = () => {
       if (error) throw new Error(error.message);
 
       toast.success(status === "approved" ? "Perfil aprovado!" : "Perfil reprovado.");
+
+      // Notifica a modelo no WhatsApp se aprovado
+      if (status === "approved") {
+        const profile = profiles.find((p) => p.id === id);
+        if (profile?.phone) {
+          const phone = "55" + profile.phone.replace(/\D/g, "");
+          sendWhatsApp(phone, `Olá ${profile.name}! 🎉\n\nSeu perfil no *xmodelprive.com* foi *aprovado* e já está visível para todos!\n\nAcesse agora: https://xmodelprive.com\n\nQualquer dúvida, fale conosco. 💋`);
+        }
+      }
+
       setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, status } : p));
     } catch (err: any) {
       toast.error("Erro ao atualizar status: " + err.message);
@@ -116,6 +127,18 @@ const AdminPage = () => {
     try {
       await updatePlan(id, plan);
       toast.success(`Plano atualizado para ${plan === "yearly" ? "Anual" : plan === "monthly" ? "Mensal" : "Gratuito"}`);
+
+      // Se ativou plano pago, credita indicação
+      if (plan !== "free") {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        fetch(`${supabaseUrl}/functions/v1/referral-credit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "apikey": supabaseKey },
+          body: JSON.stringify({ profileId: id }),
+        });
+      }
+
       setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, plan } : p));
     } catch (err: any) {
       toast.error("Erro ao atualizar plano: " + err.message);

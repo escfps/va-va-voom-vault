@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { notifyAdmin } from "@/lib/whatsapp";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
@@ -94,6 +95,9 @@ const RegisterPage = () => {
   const urlTipo = searchParams.get("tipo");
   const initialTypes: string[] =
     urlTipo === "acompanhante" || urlTipo === "conteudo" ? [urlTipo] : [];
+
+  // Código de indicação via ?ref=CODIGO
+  const refCode = searchParams.get("ref") ?? "";
 
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
@@ -347,6 +351,9 @@ const RegisterPage = () => {
         }
       } else {
         // Cria perfil novo
+        // Gera código de indicação único
+        const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
         const { data: profileData, error } = await supabase
           .from("profiles")
           .insert({
@@ -362,13 +369,17 @@ const RegisterPage = () => {
             tags: profileTypes,
             profile_created_at: new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" }),
             reviews: [],
-          })
+            referral_code: referralCode,
+            referred_by: refCode || null,
+          } as any)
           .select("id")
           .single();
 
         if (error) {
           toast.error("Erro ao criar perfil: " + error.message);
         } else {
+          const tipo = profileTypes.includes("acompanhante") ? "Acompanhante" : "Criadora de conteúdo";
+          notifyAdmin(`🆕 *Novo perfil cadastrado!*\n\nNome: ${form.name}\nTipo: ${tipo}\nCidade: ${form.city} - ${form.state}\nE-mail: ${user.email}\n\nAcesse o painel admin para aprovar.`);
           if (profileTypes.includes("acompanhante")) {
             navigate("/planos", { state: { profileId: profileData.id } });
           } else {

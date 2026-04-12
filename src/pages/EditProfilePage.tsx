@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   Camera, X, Loader2, Save, Trash2, Video, Crown, Calendar, Check, Star, Zap,
-  ChevronDown, ChevronUp, Heart, ShoppingBag, ImageIcon, Upload, Eye, Plus, LayoutDashboard,
+  ChevronDown, ChevronUp, Heart, ShoppingBag, ImageIcon, Upload, Eye, Plus, LayoutDashboard, Gift, Copy, Wallet,
 } from "lucide-react";
 import ScheduleSection, { defaultSchedule, scheduleToDb, dbToSchedule } from "@/components/register/ScheduleSection";
 import ServicesSection, { defaultServices, servicesToDb, dbToServices } from "@/components/register/ServicesSection";
@@ -43,6 +43,8 @@ const EditProfilePage = () => {
   const [activeTab, setActiveTab] = useState<string>("acompanhante");
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
+  const [referralCode, setReferralCode] = useState<string>("");
+  const [referralBalance, setReferralBalance] = useState<number>(0);
   const [showPlanChange, setShowPlanChange] = useState(false);
   const [selectedNewPlan, setSelectedNewPlan] = useState<string | null>(null);
   const [planSaving, setPlanSaving] = useState(false);
@@ -112,6 +114,8 @@ const EditProfilePage = () => {
       setSelectedCoverPhoto(data.cover_image || (data.images?.[0] ?? null));
       setCurrentPlan(data.plan || "free");
       setPlanExpiresAt(data.plan_expires_at || null);
+      setReferralCode((data as any).referral_code || "");
+      setReferralBalance((data as any).referral_balance || 0);
 
       const types = (data.tags ?? []).filter((t: string) => t === "acompanhante" || t === "conteudo");
       const effectiveTypes = types.length > 0 ? types : ["acompanhante"];
@@ -1221,6 +1225,75 @@ const EditProfilePage = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* ── Card: Indicações ── */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Gift className="h-5 w-5 text-pink-500" /> Programa de Indicação
+              </CardTitle>
+              <CardDescription>Indique outras modelos e ganhe R$ 5,00 por cada uma que ativar um plano</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+
+              {/* Saldo */}
+              <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <Wallet className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">Saldo acumulado</p>
+                    <p className="text-xs text-muted-foreground">
+                      {referralBalance >= 100
+                        ? "Você pode solicitar o saque!"
+                        : `Faltam R$ ${(100 - referralBalance).toFixed(2)} para poder sacar`}
+                    </p>
+                  </div>
+                </div>
+                <p className={`text-2xl font-bold ${referralBalance >= 100 ? "text-green-600" : "text-foreground"}`}>
+                  R$ {referralBalance.toFixed(2)}
+                </p>
+              </div>
+
+              {referralBalance >= 100 && (
+                <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-sm text-green-700 dark:text-green-400">
+                  🎉 Você atingiu R$ 100,00! Entre em contato via WhatsApp para solicitar seu saque via PIX.
+                </div>
+              )}
+
+              {/* Link de indicação */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Seu link de indicação</p>
+                {referralCode ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-muted rounded-lg px-3 py-2 text-sm text-muted-foreground break-all font-mono">
+                      {`https://xmodelprive.com/cadastro?ref=${referralCode}`}
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`https://xmodelprive.com/cadastro?ref=${referralCode}`);
+                        toast.success("Link copiado!");
+                      }}
+                      className="shrink-0 p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Seu código será gerado automaticamente.</p>
+                )}
+              </div>
+
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>• Compartilhe seu link com outras modelos</p>
+                <p>• Quando elas ativarem qualquer plano pago, você ganha R$ 5,00</p>
+                <p>• Acumule R$ 100,00 para solicitar o saque via PIX</p>
+              </div>
+
+            </CardContent>
+          </Card>
+
         </div>
       </main>
       <Footer />
