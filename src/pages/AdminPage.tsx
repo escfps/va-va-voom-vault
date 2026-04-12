@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { updatePlan } from "@/lib/updatePlan";
 
 // ─── Configure o e-mail do administrador aqui ───────────────────────────────
-const ADMIN_EMAILS = ["bruno13@hotmail.com"];
+const ADMIN_EMAILS = ["bruno13@hotmail.com", "texasgramado@gmail.com"];
 
 const typeLabel = (tags: string[]) => {
   const types = (tags ?? []).filter((t) => t === "acompanhante" || t === "conteudo");
@@ -97,21 +97,27 @@ const AdminPage = () => {
   const handleChangeStatus = async (id: string, status: "approved" | "rejected") => {
     setUpdatingStatusId(id);
     try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-plan`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({ profileId: id, status }),
-        }
-      );
-      const result = await res.json();
-      if (!res.ok || result.error) throw new Error(result.error ?? "Erro desconhecido");
+      const token = session?.access_token ?? supabaseKey;
+
+      const res = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${token}`,
+          "Prefer": "return=minimal",
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message ?? `HTTP ${res.status}`);
+      }
+
       toast.success(status === "approved" ? "Perfil aprovado!" : "Perfil reprovado.");
       setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, status } : p));
     } catch (err: any) {

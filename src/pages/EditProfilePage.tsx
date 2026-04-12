@@ -23,7 +23,7 @@ import PaymentSection from "@/components/register/PaymentSection";
 
 const isVideoUrl = (url: string) => /\.(mp4|mov|webm|avi|mkv|m4v)(\?.*)?$/i.test(url);
 
-const ADMIN_EMAILS = ["bruno13@hotmail.com"];
+const ADMIN_EMAILS = ["bruno13@hotmail.com", "texasgramado@gmail.com"];
 
 const EditProfilePage = () => {
   const navigate = useNavigate();

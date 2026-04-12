@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X as XIcon, User, LogIn, UserCheck, Heart, LogOut, Crown, Check, Star, Zap, Loader2, Calendar, ShoppingBag, Shield } from "lucide-react";
 
-const ADMIN_EMAILS = ["bruno13@hotmail.com"];
+const ADMIN_EMAILS = ["bruno13@hotmail.com", "texasgramado@gmail.com"];
 import { useFavorites } from "@/hooks/useFavorites";
 import {
   Dialog,
