@@ -3,5 +3,8 @@
     "allow": [
       "Bash(npx supabase:*)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }
