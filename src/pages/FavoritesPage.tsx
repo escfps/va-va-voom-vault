@@ -87,6 +87,7 @@ const FavoritesPage = () => {
                   verified={profile.verified || false}
                   rating={Number(profile.rating) || 0}
                   tags={profile.tags || []}
+                  plan={profile.plan || "free"}
                 />
               ))}
             </div>

@@ -48,7 +48,7 @@ const PLANS = [
     color: "border-primary",
     badge: "Popular",
     badgeColor: "bg-primary text-primary-foreground",
-    features: ["Fotos ilimitadas", "Verificação", "Destaque"],
+    features: ["Fotos ilimitadas", "Verificação", "Destaque", "Upload de vídeos"],
   },
   {
     id: "yearly",
@@ -59,7 +59,7 @@ const PLANS = [
     color: "border-yellow-500",
     badge: "Melhor valor",
     badgeColor: "bg-yellow-500 text-white",
-    features: ["Tudo do Mensal", "Prioridade no ranking"],
+    features: ["Tudo do Mensal", "Prioridade no ranking", "Vídeo como foto de perfil"],
   },
 ];
 

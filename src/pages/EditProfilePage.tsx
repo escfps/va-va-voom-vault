@@ -161,6 +161,7 @@ const EditProfilePage = () => {
 
   const isPaidPlan = currentPlan === "monthly" || currentPlan === "yearly";
   const isYearlyPlan = currentPlan === "yearly";
+  const canUploadVideos = isPaidPlan; // mensal e anual podem fazer upload de vídeos de conteúdo
   const photoLimit = isPaidPlan ? Infinity : 3;
 
   const handleNewPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -204,16 +205,14 @@ const EditProfilePage = () => {
   const uploadContentFiles = async (files: File[]) => {
     if (!user || files.length === 0) return;
 
-    // Plano gratuito: máx 3 fotos e 1 vídeo
-    const paid = currentPlan === "monthly" || currentPlan === "yearly";
-    if (!paid) {
-      const currentVideoCount = contentMedia.filter((m) => isVideoUrl(m)).length;
-      const currentPhotoCount = contentMedia.filter((m) => !isVideoUrl(m)).length;
+    // Plano gratuito: máx 3 fotos, sem vídeos
+    if (!isPaidPlan) {
       const incomingVideos = files.filter((f) => f.type.startsWith("video/"));
+      const currentPhotoCount = contentMedia.filter((m) => !isVideoUrl(m)).length;
       const incomingPhotos = files.filter((f) => f.type.startsWith("image/"));
 
-      if (incomingVideos.length > 0 && currentVideoCount >= 1) {
-        toast.error("Plano Gratuito: apenas 1 vídeo permitido. Faça upgrade para ilimitado.");
+      if (incomingVideos.length > 0) {
+        toast.error("Upload de vídeos é exclusivo dos planos Mensal e Anual. Faça upgrade para liberar.");
         return;
       }
       if (incomingPhotos.length > 0 && currentPhotoCount + incomingPhotos.length > 3) {
@@ -991,8 +990,8 @@ const EditProfilePage = () => {
                       sublabel: "para sempre",
                       icon: <Zap className="h-4 w-4" />,
                       color: "border-border",
-                      features: ["Até 3 fotos visíveis", "Perfil básico"],
-                      missing: ["Verificação", "Destaque", "Fotos ilimitadas"],
+                      features: ["Até 3 fotos", "Perfil básico"],
+                      missing: ["Verificação", "Destaque", "Fotos ilimitadas", "Upload de vídeos", "Vídeo como foto de perfil"],
                     },
                     {
                       id: "monthly",
@@ -1003,8 +1002,8 @@ const EditProfilePage = () => {
                       color: "border-primary",
                       badge: "Popular",
                       badgeColor: "bg-primary text-primary-foreground",
-                      features: ["Fotos ilimitadas", "Verificação", "Destaque", "Selo verificada"],
-                      missing: [],
+                      features: ["Fotos ilimitadas", "Verificação", "Destaque", "Upload de vídeos", "Selo verificada"],
+                      missing: ["Vídeo como foto de perfil"],
                     },
                     {
                       id: "yearly",
@@ -1015,7 +1014,7 @@ const EditProfilePage = () => {
                       color: "border-yellow-500",
                       badge: "Melhor valor",
                       badgeColor: "bg-yellow-500 text-white",
-                      features: ["Fotos ilimitadas", "Verificação", "Destaque", "Selo verificada", "Prioridade no ranking"],
+                      features: ["Fotos ilimitadas", "Verificação", "Destaque", "Upload de vídeos", "Selo verificada", "Prioridade no ranking", "Vídeo como foto de perfil"],
                       missing: [],
                     },
                   ].map((plan) => (
