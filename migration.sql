@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   amenities text,
   tags text[],
   profile_created_at text,
+  status text NOT NULL DEFAULT 'pending',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );

@@ -97,26 +97,12 @@ const AdminPage = () => {
   const handleChangeStatus = async (id: string, status: "approved" | "rejected") => {
     setUpdatingStatusId(id);
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token ?? supabaseKey;
-
-      const res = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${token}`,
-          "Prefer": "return=minimal",
-        },
-        body: JSON.stringify({ status }),
+      const { error } = await supabase.rpc("set_profile_status", {
+        profile_id: id,
+        new_status: status,
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message ?? `HTTP ${res.status}`);
-      }
+      if (error) throw new Error(error.message);
 
       toast.success(status === "approved" ? "Perfil aprovado!" : "Perfil reprovado.");
       setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, status } : p));
