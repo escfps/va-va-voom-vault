@@ -28,6 +28,7 @@ export const AVAILABLE_SERVICES = [
 export const PAYMENT_METHODS = ["Dinheiro", "PIX", "Cartão de crédito", "Cartão de débito", "Transferência bancária"];
 
 export const PRICING_DURATIONS = [
+  "15 minutos",
   "30 minutos",
   "1 hora",
   "2 horas",

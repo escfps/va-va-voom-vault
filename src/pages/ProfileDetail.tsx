@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import logo from "@/assets/logo.png";
-import { useQuery } from "@tanstack/react-query";
+import Watermark from "@/components/Watermark";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchProfileById, fetchProfiles } from "@/lib/profiles";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, MapPin, Star, CheckCircle, MessageCircle, Heart, Flag,
   Home, Users, Clock, Camera,
   User, MessageSquare, ChevronDown, ChevronUp, ShieldCheck, Video,
-  DollarSign, Banknote, CreditCard, Smartphone, Pencil,
+  DollarSign, Banknote, CreditCard, Smartphone, Pencil, Send, Loader2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const isVideoUrl = (url: string) => /\.(mp4|mov|webm|avi|mkv|m4v)(\?.*)?$/i.test(url);
 
@@ -21,6 +24,8 @@ const ProfileDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", id],
     queryFn: () => fetchProfileById(id!),
@@ -30,6 +35,56 @@ const ProfileDetail = () => {
     queryKey: ["profiles"],
     queryFn: fetchProfiles,
   });
+
+  // Reviews do banco
+  const { data: dbReviews = [], isLoading: reviewsLoading } = useQuery({
+    queryKey: ["reviews", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("reviews")
+        .select("*")
+        .eq("profile_id", id!)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
+  // Verifica se o usuário logado já avaliou
+  const myReview = user ? dbReviews.find((r: any) => r.reviewer_id === user.id) : null;
+
+  // Form state
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText]   = useState("");
+  const [hoverRating, setHoverRating] = useState(0);
+  const [submitting, setSubmitting]   = useState(false);
+
+  const submitReview = async () => {
+    if (!user) { toast.error("Faça login para avaliar."); return; }
+    if (!reviewText.trim()) { toast.error("Escreva um comentário."); return; }
+    setSubmitting(true);
+    const { error } = await supabase.from("reviews").upsert(
+      { profile_id: id, reviewer_id: user.id, rating: reviewRating, text: reviewText.trim() },
+      { onConflict: "reviewer_id,profile_id" },
+    );
+    setSubmitting(false);
+    if (error) { toast.error("Erro ao enviar avaliação."); return; }
+    toast.success(myReview ? "Avaliação atualizada!" : "Avaliação enviada!");
+    setReviewText("");
+    queryClient.invalidateQueries({ queryKey: ["reviews", id] });
+  };
+
+  const deleteReview = async () => {
+    if (!user) return;
+    await supabase.from("reviews").delete().eq("profile_id", id!).eq("reviewer_id", user.id);
+    toast.success("Avaliação removida.");
+    queryClient.invalidateQueries({ queryKey: ["reviews", id] });
+  };
+
+  const avgRating = dbReviews.length
+    ? dbReviews.reduce((s: number, r: any) => s + r.rating, 0) / dbReviews.length
+    : 0;
+
   const [activeTab, setActiveTab] = useState<"fotos" | "sobre" | "avaliacoes">("fotos");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [expandedService, setExpandedService] = useState<string | null>(null);
@@ -64,7 +119,7 @@ const ProfileDetail = () => {
   const tabs = [
     { key: "fotos" as const, label: "Fotos", icon: Camera, count: profile.images.length },
     { key: "sobre" as const, label: "Sobre mim", icon: User },
-    { key: "avaliacoes" as const, label: "Avaliações", icon: MessageSquare, count: profile.reviewCount },
+    { key: "avaliacoes" as const, label: "Avaliações", icon: MessageSquare, count: dbReviews.length },
   ];
 
   const characteristics = [
@@ -100,7 +155,7 @@ const ProfileDetail = () => {
             <img src={profile.coverImage} alt={`Capa de ${profile.name}`} className="w-full h-full object-cover" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
-          <img src={logo} alt="X Model Privê" className="absolute bottom-4 right-4 w-20 opacity-40 drop-shadow-lg pointer-events-none select-none z-10" />
+          <Watermark className="absolute bottom-4 right-4 z-10" size="lg" />
           <div className="absolute top-4 left-4 right-4 flex justify-between">
             <Link to="/" className="inline-flex items-center gap-2 bg-background/70 backdrop-blur px-4 py-2 rounded-lg text-sm text-foreground hover:bg-background/90 transition-colors">
               <ArrowLeft className="h-4 w-4" /> Voltar
@@ -220,9 +275,15 @@ const ProfileDetail = () => {
 
           {/* WhatsApp CTA */}
           <div className="mt-6">
-            <Button size="lg" className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white gap-2 text-base px-8">
-              <MessageCircle className="h-5 w-5" /> Chamar no WhatsApp
-            </Button>
+            <a
+              href={`https://wa.me/55${profile.phone?.replace(/\D/g, "")}?text=${encodeURIComponent("Oi, tudo bem? Vim pelo site xmodelprive.com, gostei do seu perfil e queria marcar um horário. Pode me passar sua disponibilidade?")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button size="lg" className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white gap-2 text-base px-8">
+                <MessageCircle className="h-5 w-5" /> Chamar no WhatsApp
+              </Button>
+            </a>
           </div>
 
           {/* Tabs */}
@@ -295,7 +356,7 @@ const ProfileDetail = () => {
                       ) : (
                         <img src={img} alt={`${profile.name} foto ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                       )}
-                      <img src={logo} alt="" className="absolute bottom-2 right-2 w-12 opacity-35 drop-shadow pointer-events-none select-none" />
+                      <Watermark className="absolute bottom-2 right-2" size="sm" />
                     </button>
                   ))}
                 </div>
@@ -532,33 +593,113 @@ const ProfileDetail = () => {
 
             {/* AVALIAÇÕES */}
             {activeTab === "avaliacoes" && (
-              <div>
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="bg-card border border-border rounded-xl p-5 text-center">
-                    <p className="text-3xl font-bold text-foreground">{profile.rating.toFixed(1)}</p>
-                    <div className="flex items-center justify-center gap-1 mt-1">
+              <div className="space-y-6">
+
+                {/* Resumo da nota */}
+                <div className="flex items-center gap-4">
+                  <div className="bg-card border border-border rounded-xl p-5 text-center min-w-[100px]">
+                    <p className="text-3xl font-bold text-foreground">{avgRating.toFixed(1)}</p>
+                    <div className="flex items-center justify-center gap-0.5 mt-1">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`h-4 w-4 ${i < Math.round(profile.rating) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                        <Star key={i} className={`h-4 w-4 ${i < Math.round(avgRating) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
                       ))}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">{profile.reviewCount} avaliações</p>
+                    <p className="text-xs text-muted-foreground mt-1">{dbReviews.length} avaliações</p>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  {profile.reviews.map((review, i) => (
-                    <div key={i} className="bg-card border border-border rounded-xl p-5">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, j) => (
-                            <Star key={j} className={`h-4 w-4 ${j < review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
-                          ))}
-                        </div>
-                        <span className="text-xs text-muted-foreground">{review.timeAgo}</span>
-                      </div>
-                      <p className="text-sm text-foreground">{review.text}</p>
+
+                {/* Formulário de avaliação */}
+                {user ? (
+                  <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+                    <p className="text-sm font-semibold text-foreground">
+                      {myReview ? "Sua avaliação" : "Deixe sua avaliação"}
+                    </p>
+
+                    {/* Estrelas interativas */}
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setReviewRating(star)}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          className="transition-transform hover:scale-110"
+                        >
+                          <Star
+                            className={`h-7 w-7 ${(hoverRating || reviewRating) >= star ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`}
+                          />
+                        </button>
+                      ))}
+                      <span className="text-sm text-muted-foreground ml-2">
+                        {["", "Péssimo", "Ruim", "Regular", "Bom", "Excelente"][hoverRating || reviewRating]}
+                      </span>
                     </div>
-                  ))}
-                </div>
+
+                    <Textarea
+                      placeholder="Conte sua experiência..."
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
+                      rows={3}
+                      className="resize-none"
+                    />
+
+                    <div className="flex gap-2">
+                      <Button onClick={submitReview} disabled={submitting} className="gap-2">
+                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        {myReview ? "Atualizar" : "Enviar avaliação"}
+                      </Button>
+                      {myReview && (
+                        <Button variant="outline" onClick={deleteReview} className="text-destructive hover:text-destructive">
+                          Remover
+                        </Button>
+                      )}
+                    </div>
+
+                    {myReview && (
+                      <p className="text-xs text-muted-foreground">
+                        Você já avaliou · edite acima ou remova sua avaliação
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-muted/40 border border-border rounded-xl p-5 text-center">
+                    <p className="text-sm text-muted-foreground mb-3">Faça login para deixar uma avaliação</p>
+                    <Button onClick={() => navigate("/login")} size="sm">Entrar</Button>
+                  </div>
+                )}
+
+                {/* Lista de avaliações */}
+                {reviewsLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : dbReviews.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Nenhuma avaliação ainda. Seja o primeiro!
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {dbReviews.map((review: any) => (
+                      <div key={review.id} className={`bg-card border rounded-xl p-5 ${review.reviewer_id === user?.id ? "border-primary/40" : "border-border"}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, j) => (
+                              <Star key={j} className={`h-4 w-4 ${j < review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                            ))}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(review.created_at).toLocaleDateString("pt-BR")}
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground">{review.text}</p>
+                        {review.reviewer_id === user?.id && (
+                          <p className="text-xs text-primary mt-2 font-medium">Sua avaliação</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -613,9 +754,15 @@ const ProfileDetail = () => {
 
         {/* Floating WhatsApp mobile */}
         <div className="fixed bottom-6 left-4 right-4 md:hidden z-40">
-          <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 shadow-xl">
-            <MessageCircle className="h-5 w-5" /> Chamar no WhatsApp
-          </Button>
+          <a
+            href={`https://wa.me/55${profile.phone?.replace(/\D/g, "")}?text=${encodeURIComponent("Oi, tudo bem? Vim pelo site xmodelprive.com, gostei do seu perfil e queria marcar um horário. Pode me passar sua disponibilidade?")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 shadow-xl">
+              <MessageCircle className="h-5 w-5" /> Chamar no WhatsApp
+            </Button>
+          </a>
         </div>
 
         {/* Lightbox */}
@@ -627,7 +774,7 @@ const ProfileDetail = () => {
               ) : (
                 <img src={selectedImage} alt="Foto ampliada" className="max-w-full max-h-[90vh] object-contain rounded-lg" />
               )}
-              <img src={logo} alt="" className="absolute bottom-3 right-3 w-20 opacity-40 drop-shadow-lg pointer-events-none select-none" />
+              <Watermark className="absolute bottom-3 right-3" size="lg" />
             </div>
           </div>
         )}

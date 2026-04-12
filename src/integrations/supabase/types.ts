@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      reviews: {
+        Row: {
+          id: string
+          profile_id: string
+          reviewer_id: string
+          rating: number
+          text: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          reviewer_id: string
+          rating: number
+          text?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          reviewer_id?: string
+          rating?: number
+          text?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string

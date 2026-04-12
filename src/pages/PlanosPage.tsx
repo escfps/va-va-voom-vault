@@ -46,7 +46,7 @@ function buildPixPayload(key: string, amount: string, name: string, city: string
   return base + crc16(base);
 }
 
-const PIX_KEY = "pix.texasgramado@gmail.com";
+const PIX_KEY = "contato@xmodelprive.com";
 const CONTACT_EMAIL = "contato@xmodelprive.com";
 
 const PIX_PAYLOADS: Record<string, string> = {
