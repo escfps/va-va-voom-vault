@@ -72,9 +72,9 @@ function mapDbToProfile(row: any): Profile {
 }
 
 const LISTING_FIELDS = [
-  "id", "name", "age", "city", "state", "tagline", "image", "cover_image",
+  "id", "name", "age", "city", "state", "tagline", "image", "images", "cover_image",
   "price", "price_duration", "plan", "verified", "verified_date",
-  "rating", "review_count", "tags", "profile_types", "gender",
+  "rating", "review_count", "tags", "gender",
   "is_active", "status", "user_id", "created_at",
 ].join(", ");
 

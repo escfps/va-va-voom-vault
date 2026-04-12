@@ -40,6 +40,15 @@ const RegisterPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
+  // Pré-marca via query param (?tipo=acompanhante ou ?tipo=conteudo)
+  const urlTipo = searchParams.get("tipo");
+
+  // Código de indicação via ?ref=CODIGO
+  // Salva no localStorage para não perder se a pessoa precisar fazer login/signup antes
+  const refFromUrl = searchParams.get("ref");
+  if (refFromUrl) localStorage.setItem("referral_ref", refFromUrl);
+  const refCode = refFromUrl || localStorage.getItem("referral_ref") || "";
+
   // Controle de perfil existente
   const [existingProfileId, setExistingProfileId] = useState<string | null>(null);
   const [existingProfileTypes, setExistingProfileTypes] = useState<string[]>([]);
@@ -91,16 +100,8 @@ const RegisterPage = () => {
       });
   }, [user, navigate]);
 
-  // Pré-marca via query param (?tipo=acompanhante ou ?tipo=conteudo)
-  const urlTipo = searchParams.get("tipo");
   const initialTypes: string[] =
     urlTipo === "acompanhante" || urlTipo === "conteudo" ? [urlTipo] : [];
-
-  // Código de indicação via ?ref=CODIGO
-  // Salva no localStorage para não perder se a pessoa precisar fazer login/signup antes
-  const refFromUrl = searchParams.get("ref");
-  if (refFromUrl) localStorage.setItem("referral_ref", refFromUrl);
-  const refCode = refFromUrl || localStorage.getItem("referral_ref") || "";
 
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
@@ -212,7 +213,7 @@ const RegisterPage = () => {
       const imageUrls = await uploadPhotos();
 
       const mainPrice = pricing.find((p) => p.price)?.price || form.price;
-      const pricingDb = pricing.filter((p) => p.price).map((p) => ({ duration: p.duration, price: parseInt(p.price) }));
+      let pricingDb = pricing.filter((p) => p.price).map((p) => ({ duration: p.duration, price: parseInt(p.price) }));
       if (pricingDb.length === 0 && form.price)
         pricingDb.push({ duration: isType("acompanhante") ? "1 hora" : "Pack de fotos", price: parseInt(form.price) });
 
@@ -408,8 +409,8 @@ const RegisterPage = () => {
             <CardContent className="pt-6 text-center space-y-4">
               <h2 className="text-xl font-bold">Faça login para continuar</h2>
               <p className="text-muted-foreground">Você precisa estar logado para cadastrar seu perfil.</p>
-              <Button onClick={() => navigate(`/login?redirect=/cadastro${refCode ? `?ref=${refCode}` : ""}`)} className="w-full">Fazer login</Button>
-              <Button variant="outline" onClick={() => navigate(`/cadastro-usuario${refCode ? `?ref=${refCode}` : ""}`)} className="w-full">Criar conta</Button>
+              <Button onClick={() => navigate("/login?redirect=/cadastro")} className="w-full">Fazer login</Button>
+              <Button variant="outline" onClick={() => navigate("/cadastro-usuario")} className="w-full">Criar conta</Button>
             </CardContent>
           </Card>
         </main>

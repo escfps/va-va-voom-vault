@@ -138,11 +138,13 @@ const AdminPage = () => {
       if (plan !== "free") {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        fetch(`${supabaseUrl}/functions/v1/referral-credit`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "apikey": supabaseKey },
-          body: JSON.stringify({ profileId: id }),
-        });
+        if (supabaseUrl && supabaseKey) {
+          fetch(`${supabaseUrl}/functions/v1/referral-credit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "apikey": supabaseKey },
+            body: JSON.stringify({ profileId: id }),
+          }).catch((err) => console.error("Erro ao creditar indicação:", err));
+        }
       }
 
       setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, plan } : p));
