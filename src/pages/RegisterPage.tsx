@@ -177,7 +177,10 @@ const RegisterPage = () => {
       const { error } = await supabase.storage
         .from("model-photos")
         .upload(path, photo, { cacheControl: "3600", upsert: false });
-      if (error) { console.error("Upload error:", error); continue; }
+      if (error) {
+        console.error("Upload error:", error);
+        throw new Error(error.message);
+      }
       const { data: urlData } = supabase.storage.from("model-photos").getPublicUrl(path);
       urls.push(urlData.publicUrl);
     }
@@ -198,7 +201,6 @@ const RegisterPage = () => {
     setLoading(true);
     try {
       const imageUrls = await uploadPhotos();
-      if (imageUrls.length === 0) { toast.error("Erro ao fazer upload das fotos"); setLoading(false); return; }
 
       const mainPrice = pricing.find((p) => p.price)?.price || form.price;
       const pricingDb = pricing.filter((p) => p.price).map((p) => ({ duration: p.duration, price: parseInt(p.price) }));
@@ -373,9 +375,9 @@ const RegisterPage = () => {
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Erro inesperado ao criar perfil");
+      toast.error(err?.message || "Erro inesperado ao criar perfil");
     }
     setLoading(false);
   };
