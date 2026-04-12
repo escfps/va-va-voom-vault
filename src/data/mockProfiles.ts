@@ -202,6 +202,9 @@ export const mockProfiles: Profile[] = [
       { rating: 5, text: "Fotos reais, ambiente ótimo. Voltarei com certeza.", timeAgo: "há 1 mês" },
       { rating: 4, text: "Muito bonita e atenciosa. Ótima experiência.", timeAgo: "há 2 meses" },
     ],
+    plan: "free",
+    isActive: true,
+    status: "approved",
   },
   {
     id: "2",
@@ -280,6 +283,9 @@ export const mockProfiles: Profile[] = [
       { rating: 5, text: "Atendimento nota 10, ambiente maravilhoso.", timeAgo: "há 3 semanas" },
       { rating: 5, text: "Melhor experiência que já tive. Voltarei!", timeAgo: "há 1 mês" },
     ],
+    plan: "free",
+    isActive: true,
+    status: "approved",
   },
   {
     id: "3",
@@ -356,6 +362,9 @@ export const mockProfiles: Profile[] = [
       { rating: 5, text: "Linda demais! Fotos 100% reais.", timeAgo: "há 2 semanas" },
       { rating: 4, text: "Boa experiência, recomendo!", timeAgo: "há 1 mês" },
     ],
+    plan: "free",
+    isActive: true,
+    status: "approved",
   },
   {
     id: "4",
@@ -432,6 +441,9 @@ export const mockProfiles: Profile[] = [
       { rating: 5, text: "Ótima profissional!", timeAgo: "há 3 semanas" },
       { rating: 4, text: "Bem atenciosa.", timeAgo: "há 2 meses" },
     ],
+    plan: "free",
+    isActive: true,
+    status: "approved",
   },
   {
     id: "5",
@@ -508,6 +520,9 @@ export const mockProfiles: Profile[] = [
       { rating: 5, text: "Muito elegante e educada!", timeAgo: "há 1 semana" },
       { rating: 4, text: "Boa companhia, recomendo.", timeAgo: "há 1 mês" },
     ],
+    plan: "free",
+    isActive: true,
+    status: "approved",
   },
   {
     id: "6",
@@ -583,6 +598,9 @@ export const mockProfiles: Profile[] = [
     reviews: [
       { rating: 5, text: "Energia incrível, adorei!", timeAgo: "há 2 semanas" },
     ],
+    plan: "free",
+    isActive: true,
+    status: "approved",
   },
   {
     id: "7",
@@ -658,6 +676,9 @@ export const mockProfiles: Profile[] = [
     reviews: [
       { rating: 4, text: "Muito simpática e bonita.", timeAgo: "há 1 mês" },
     ],
+    plan: "free",
+    isActive: true,
+    status: "approved",
   },
   {
     id: "8",
@@ -735,5 +756,8 @@ export const mockProfiles: Profile[] = [
       { rating: 5, text: "Muito profissional e bonita.", timeAgo: "há 3 semanas" },
       { rating: 4, text: "Ótima experiência, recomendo.", timeAgo: "há 2 meses" },
     ],
+    plan: "free",
+    isActive: true,
+    status: "approved",
   },
 ];

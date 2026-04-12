@@ -63,8 +63,6 @@ export type Database = {
           has_own_place: boolean | null
           height: string | null
           id: string
-          is_active: boolean
-          status: string
           image: string | null
           images: string[] | null
           languages: string[] | null
@@ -79,6 +77,8 @@ export type Database = {
           phone: string | null
           piercings: boolean | null
           places_served: string | null
+          plan: string | null
+          plan_expires_at: string | null
           price: number
           price_duration: string | null
           pricing: Json | null
@@ -94,14 +94,12 @@ export type Database = {
           silicone: boolean | null
           smoker: boolean | null
           state: string
+          status: string | null
           tagline: string | null
           tags: string[] | null
           tattoos: boolean | null
           updated_at: string
           user_id: string | null
-          plan: string | null
-          plan_expires_at: string | null
-          profile_types?: string[] | null
           verified: boolean | null
           verified_date: string | null
           weight: string | null
@@ -125,8 +123,6 @@ export type Database = {
           has_own_place?: boolean | null
           height?: string | null
           id?: string
-          is_active?: boolean
-          status?: string
           image?: string | null
           images?: string[] | null
           languages?: string[] | null
@@ -141,6 +137,8 @@ export type Database = {
           phone?: string | null
           piercings?: boolean | null
           places_served?: string | null
+          plan?: string | null
+          plan_expires_at?: string | null
           price?: number
           price_duration?: string | null
           pricing?: Json | null
@@ -156,14 +154,12 @@ export type Database = {
           silicone?: boolean | null
           smoker?: boolean | null
           state: string
+          status?: string | null
           tagline?: string | null
           tags?: string[] | null
           tattoos?: boolean | null
           updated_at?: string
           user_id?: string | null
-          plan?: string | null
-          plan_expires_at?: string | null
-          profile_types?: string[] | null
           verified?: boolean | null
           verified_date?: string | null
           weight?: string | null
@@ -187,8 +183,6 @@ export type Database = {
           has_own_place?: boolean | null
           height?: string | null
           id?: string
-          is_active?: boolean
-          status?: string
           image?: string | null
           images?: string[] | null
           languages?: string[] | null
@@ -203,6 +197,8 @@ export type Database = {
           phone?: string | null
           piercings?: boolean | null
           places_served?: string | null
+          plan?: string | null
+          plan_expires_at?: string | null
           price?: number
           price_duration?: string | null
           pricing?: Json | null
@@ -218,14 +214,12 @@ export type Database = {
           silicone?: boolean | null
           smoker?: boolean | null
           state?: string
+          status?: string | null
           tagline?: string | null
           tags?: string[] | null
           tattoos?: boolean | null
           updated_at?: string
           user_id?: string | null
-          plan?: string | null
-          plan_expires_at?: string | null
-          profile_types?: string[] | null
           verified?: boolean | null
           verified_date?: string | null
           weight?: string | null
@@ -267,14 +261,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      set_profile_plan: {
-        Args: {
-          profile_id: string
-          new_plan: string
-          new_expires_at: string | null
-        }
-        Returns: void
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

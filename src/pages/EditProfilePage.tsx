@@ -100,7 +100,7 @@ const EditProfilePage = () => {
       } else {
         query = query.eq("user_id", user.id);
       }
-      const { data, error } = await query.maybeSingle();
+      const { data, error } = await query.maybeSingle() as any;
 
       if (error) { console.error(error); toast.error("Erro ao carregar perfil"); setLoading(false); return; }
       if (!data) { setLoading(false); return; }

@@ -22,9 +22,9 @@ const PagamentoConfirmadoPage = () => {
     let attempts = 0;
     const interval = setInterval(async () => {
       attempts++;
-      const { data } = await supabase
+      const { data } = await (supabase
         .from("profiles")
-        .select("plan")
+        .select("plan") as any)
         .eq("id", profileId)
         .maybeSingle();
 
