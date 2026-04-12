@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { MapPin, Star, CheckCircle, Crown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import FavoriteButton from "@/components/FavoriteButton";
+import logo from "@/assets/logo.png";
 
 interface ProfileCardProps {
   id: string;
@@ -59,6 +60,15 @@ const ProfileCard = ({
         {isYearly && (
           <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/10 via-transparent to-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
         )}
+
+        {/* Watermark logo */}
+        <div className="absolute bottom-14 right-2 z-10 pointer-events-none select-none">
+          <img
+            src={logo}
+            alt="X Model Privê"
+            className="w-16 opacity-40 drop-shadow-md"
+          />
+        </div>
 
         <div className="absolute top-3 right-3 z-10">
           <FavoriteButton profileId={id} />

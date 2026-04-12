@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import logo from "@/assets/logo.png";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProfileById, fetchProfiles } from "@/lib/profiles";
 import Navbar from "@/components/Navbar";
@@ -99,6 +100,7 @@ const ProfileDetail = () => {
             <img src={profile.coverImage} alt={`Capa de ${profile.name}`} className="w-full h-full object-cover" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
+          <img src={logo} alt="X Model Privê" className="absolute bottom-4 right-4 w-20 opacity-40 drop-shadow-lg pointer-events-none select-none z-10" />
           <div className="absolute top-4 left-4 right-4 flex justify-between">
             <Link to="/" className="inline-flex items-center gap-2 bg-background/70 backdrop-blur px-4 py-2 rounded-lg text-sm text-foreground hover:bg-background/90 transition-colors">
               <ArrowLeft className="h-4 w-4" /> Voltar
@@ -293,6 +295,7 @@ const ProfileDetail = () => {
                       ) : (
                         <img src={img} alt={`${profile.name} foto ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
                       )}
+                      <img src={logo} alt="" className="absolute bottom-2 right-2 w-12 opacity-35 drop-shadow pointer-events-none select-none" />
                     </button>
                   ))}
                 </div>
@@ -618,11 +621,14 @@ const ProfileDetail = () => {
         {/* Lightbox */}
         {selectedImage && (
           <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
-            {isVideoUrl(selectedImage) ? (
-              <video src={selectedImage} className="max-w-full max-h-full rounded-lg" controls autoPlay onClick={(e) => e.stopPropagation()} />
-            ) : (
-              <img src={selectedImage} alt="Foto ampliada" className="max-w-full max-h-full object-contain rounded-lg" />
-            )}
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+              {isVideoUrl(selectedImage) ? (
+                <video src={selectedImage} className="max-w-full max-h-[90vh] rounded-lg" controls autoPlay />
+              ) : (
+                <img src={selectedImage} alt="Foto ampliada" className="max-w-full max-h-[90vh] object-contain rounded-lg" />
+              )}
+              <img src={logo} alt="" className="absolute bottom-3 right-3 w-20 opacity-40 drop-shadow-lg pointer-events-none select-none" />
+            </div>
           </div>
         )}
       </main>
