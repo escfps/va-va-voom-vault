@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Camera, X, Upload, Loader2, Video, Heart, User, ShoppingBag, Check } from "lucide-react";
+import { Camera, X, Upload, Loader2, Video, Heart, User, ShoppingBag, Check, ImageIcon } from "lucide-react";
 import ScheduleSection, { defaultSchedule, scheduleToDb } from "@/components/register/ScheduleSection";
 import ServicesSection, { defaultServices, servicesToDb } from "@/components/register/ServicesSection";
 import PaymentSection from "@/components/register/PaymentSection";
@@ -98,6 +98,8 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [selectedProfileIndex, setSelectedProfileIndex] = useState<number>(0);
+  const [selectedCoverIndex, setSelectedCoverIndex] = useState<number>(0);
   const [verificationVideo, setVerificationVideo] = useState<File | null>(null);
   const [step, setStep] = useState(0); // 0 = seleção de tipos
   const totalSteps = 4;
@@ -230,9 +232,9 @@ const RegisterPage = () => {
         tagline: form.tagline,
         price: parseInt(mainPrice || form.price),
         price_duration: isType("acompanhante") ? "1 hora" : "pack",
-        image: imageUrls[0],
+        image: imageUrls[selectedProfileIndex] ?? imageUrls[0],
         images: imageUrls,
-        cover_image: imageUrls[0],
+        cover_image: imageUrls[selectedCoverIndex] ?? imageUrls[0],
         height: form.height,
         weight: form.weight,
         ethnicity: form.ethnicity,
@@ -846,30 +848,57 @@ const RegisterPage = () => {
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground">Suas fotos e vídeos</h3>
                     <p className="text-sm text-muted-foreground">
-                      Adicione até {maxPhotos} mídias. A primeira será sua mídia principal.
+                      Adicione até {maxPhotos} mídias. Toque em uma foto para definir como perfil ou capa.
                     </p>
+                    {previews.length > 0 && (
+                      <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-primary inline-block" /> Perfil</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-purple-500 inline-block" /> Capa</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-yellow-400 inline-block" /> Perfil e capa</span>
+                      </div>
+                    )}
                     <div className="grid grid-cols-3 gap-3">
-                      {previews.map((src, i) => (
-                        <div key={i} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-border">
-                          {photos[i]?.type.startsWith("video/") ? (
-                            <video src={src} className="w-full h-full object-cover" muted playsInline />
-                          ) : (
-                            <img src={src} alt={`Mídia ${i + 1}`} className="w-full h-full object-cover" />
-                          )}
-                          {i === 0 && (
-                            <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">
-                              Principal
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => removePhoto(i)}
-                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
+                      {previews.map((src, i) => {
+                        const isProfile = i === selectedProfileIndex;
+                        const isCover = i === selectedCoverIndex;
+                        const isVideo = photos[i]?.type.startsWith("video/");
+                        return (
+                        <div key={i} className={`relative flex flex-col rounded-lg overflow-hidden border-2 transition-all ${isProfile && isCover ? "border-yellow-400" : isProfile ? "border-primary" : isCover ? "border-purple-500" : "border-border"}`}>
+                          <div className="relative aspect-[3/4]">
+                            {isVideo ? (
+                              <video src={src} className="w-full h-full object-cover" muted playsInline />
+                            ) : (
+                              <img src={src} alt={`Mídia ${i + 1}`} className="w-full h-full object-cover" />
+                            )}
+                            <div className="absolute top-1 left-1 flex flex-col gap-0.5">
+                              {isProfile && <span className="bg-primary text-primary-foreground text-[9px] px-1 py-0.5 rounded font-bold">PERFIL</span>}
+                              {isCover && <span className="bg-purple-500 text-white text-[9px] px-1 py-0.5 rounded font-bold">CAPA</span>}
+                            </div>
+                            <button type="button" onClick={() => removePhoto(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                          <div className="flex gap-1 p-1 bg-muted">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedProfileIndex(i)}
+                              disabled={isProfile}
+                              className={`flex-1 text-[9px] py-1 rounded font-bold flex items-center justify-center gap-0.5 transition-colors ${isProfile ? "bg-primary text-white cursor-default" : "bg-background border border-primary text-primary hover:bg-primary hover:text-white"}`}
+                            >
+                              <Camera className="h-2.5 w-2.5" /> {isProfile ? "Perfil ✓" : "Perfil"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCoverIndex(i)}
+                              disabled={isCover}
+                              className={`flex-1 text-[9px] py-1 rounded font-bold flex items-center justify-center gap-0.5 transition-colors ${isCover ? "bg-purple-500 text-white cursor-default" : "bg-background border border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white"}`}
+                            >
+                              <ImageIcon className="h-2.5 w-2.5" /> {isCover ? "Capa ✓" : "Capa"}
+                            </button>
+                          </div>
                         </div>
-                      ))}
+                        );
+                      })}
                       {photos.length < maxPhotos && (
                         <button
                           type="button"

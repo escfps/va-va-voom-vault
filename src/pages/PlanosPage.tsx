@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -66,7 +66,12 @@ const PlanosPage = () => {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerTaxId, setCustomerTaxId] = useState("");
 
-  const profileId = (location.state as { profileId?: string } | null)?.profileId;
+  const locationState = location.state as { profileId?: string; preselectedPlan?: string } | null;
+  const profileId = locationState?.profileId;
+  const preselectedPlan = locationState?.preselectedPlan;
+
+  // Pré-seleciona o plano se veio do EditProfilePage
+  useEffect(() => { if (preselectedPlan) setSelectedPlan(preselectedPlan); }, [preselectedPlan]);
 
   const isPaidPlan = selectedPlan && selectedPlan !== "free";
 

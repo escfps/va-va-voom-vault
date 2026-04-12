@@ -118,25 +118,26 @@ const Navbar = () => {
     planInfo?.plan === "monthly" ? "Mensal" :
     planInfo?.plan === "yearly" ? "Anual" : "Gratuito";
 
-  const getPlanExpiresAt = (planId: string): string | null => {
-    if (planId === "free") return null;
-    const date = new Date();
-    if (planId === "monthly") date.setDate(date.getDate() + 30);
-    if (planId === "yearly") date.setFullYear(date.getFullYear() + 1);
-    return date.toISOString();
-  };
 
   const handleChangePlan = async () => {
     if (!selectedNewPlan || !planInfo?.profileId || !user) return;
+
+    // Planos pagos: redireciona para checkout com PIX
+    if (selectedNewPlan !== "free") {
+      setPlanPopoverOpen(false);
+      setSelectedNewPlan(null);
+      navigate("/planos", { state: { profileId: planInfo.profileId, preselectedPlan: selectedNewPlan } });
+      return;
+    }
+
+    // Downgrade para free: aplica direto
     setPlanSaving(true);
     try {
       await updatePlan(planInfo.profileId, selectedNewPlan);
-      const expiresAt = getPlanExpiresAt(selectedNewPlan);
-      setPlanInfo({ ...planInfo, plan: selectedNewPlan, expiresAt });
+      setPlanInfo({ ...planInfo, plan: "free", expiresAt: null });
       setSelectedNewPlan(null);
       setPlanPopoverOpen(false);
-      const name = selectedNewPlan === "free" ? "Gratuito" : selectedNewPlan === "monthly" ? "Mensal" : "Anual";
-      toast.success(`Plano ${name} ativado com sucesso!`);
+      toast.success("Plano alterado para Gratuito.");
     } catch {
       toast.error("Erro ao alterar plano");
     }
@@ -265,7 +266,7 @@ const Navbar = () => {
                       </div>
                       <div className="px-3 pb-3">
                         <Button className="w-full gap-2" disabled={!selectedNewPlan || planSaving} onClick={handleChangePlan}>
-                          {planSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Alterando...</> : "Confirmar plano"}
+                          {planSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Aguarde...</> : selectedNewPlan && selectedNewPlan !== "free" ? "Ir ao pagamento →" : "Confirmar plano"}
                         </Button>
                       </div>
                     </PopoverContent>
@@ -277,43 +278,85 @@ const Navbar = () => {
               {/* ── Botões de categoria — sempre visíveis para logados ── */}
               {user && (
                 <>
-                  <Link
-                    to={profileTypes.includes("acompanhante") ? "/meu-perfil" : "/cadastro?tipo=acompanhante"}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 transition-all ${
-                      profileTypes.includes("acompanhante")
-                        ? "border-primary bg-primary/5 hover:bg-primary/10"
-                        : "border-dashed border-muted-foreground/40 hover:border-primary/50 hover:bg-muted/40"
-                    }`}
-                  >
-                    <Heart className={`h-3.5 w-3.5 shrink-0 ${profileTypes.includes("acompanhante") ? "text-primary" : "text-muted-foreground"}`} />
-                    <div>
-                      <p className={`font-bold text-[11px] leading-tight whitespace-nowrap ${profileTypes.includes("acompanhante") ? "text-primary" : "text-muted-foreground"}`}>
-                        SOU ACOMPANHANTE
-                      </p>
-                      <p className="text-[10px] leading-tight text-muted-foreground">
-                        {profileTypes.includes("acompanhante") ? "Editar perfil" : "Criar perfil"}
-                      </p>
-                    </div>
-                  </Link>
+                  {/* Acompanhante */}
+                  {profileTypes.includes("acompanhante") ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-all">
+                          <Heart className="h-3.5 w-3.5 shrink-0 text-primary" />
+                          <div className="text-left">
+                            <p className="font-bold text-[11px] leading-tight whitespace-nowrap text-primary">SOU ACOMPANHANTE</p>
+                            <p className="text-[10px] leading-tight text-muted-foreground">Editar perfil ▾</p>
+                          </div>
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-44">
+                        <DropdownMenuItem asChild>
+                          <Link to="/meu-perfil" className="flex items-center gap-2 cursor-pointer">
+                            <User className="h-4 w-4" /> Editar perfil
+                          </Link>
+                        </DropdownMenuItem>
+                        {planInfo?.profileId && (
+                          <DropdownMenuItem asChild>
+                            <Link to={`/perfil/${planInfo.profileId}`} className="flex items-center gap-2 cursor-pointer">
+                              <Heart className="h-4 w-4" /> Ver perfil
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <Link
+                      to="/cadastro?tipo=acompanhante"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-dashed border-muted-foreground/40 hover:border-primary/50 hover:bg-muted/40 transition-all"
+                    >
+                      <Heart className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <div>
+                        <p className="font-bold text-[11px] leading-tight whitespace-nowrap text-muted-foreground">SOU ACOMPANHANTE</p>
+                        <p className="text-[10px] leading-tight text-muted-foreground">Criar perfil</p>
+                      </div>
+                    </Link>
+                  )}
 
-                  <Link
-                    to={profileTypes.includes("conteudo") ? "/meu-perfil" : "/cadastro?tipo=conteudo"}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 transition-all ${
-                      profileTypes.includes("conteudo")
-                        ? "border-primary bg-primary/5 hover:bg-primary/10"
-                        : "border-dashed border-muted-foreground/40 hover:border-primary/50 hover:bg-muted/40"
-                    }`}
-                  >
-                    <ShoppingBag className={`h-3.5 w-3.5 shrink-0 ${profileTypes.includes("conteudo") ? "text-primary" : "text-muted-foreground"}`} />
-                    <div>
-                      <p className={`font-bold text-[11px] leading-tight whitespace-nowrap ${profileTypes.includes("conteudo") ? "text-primary" : "text-muted-foreground"}`}>
-                        VENDEDORA DE CONTEÚDOS
-                      </p>
-                      <p className="text-[10px] leading-tight text-muted-foreground">
-                        {profileTypes.includes("conteudo") ? "Editar perfil" : "Criar perfil"}
-                      </p>
-                    </div>
-                  </Link>
+                  {/* Vendedora de conteúdo */}
+                  {profileTypes.includes("conteudo") ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-all">
+                          <ShoppingBag className="h-3.5 w-3.5 shrink-0 text-primary" />
+                          <div className="text-left">
+                            <p className="font-bold text-[11px] leading-tight whitespace-nowrap text-primary">VENDEDORA DE CONTEÚDOS</p>
+                            <p className="text-[10px] leading-tight text-muted-foreground">Editar perfil ▾</p>
+                          </div>
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-44">
+                        <DropdownMenuItem asChild>
+                          <Link to="/meu-perfil" className="flex items-center gap-2 cursor-pointer">
+                            <User className="h-4 w-4" /> Editar perfil
+                          </Link>
+                        </DropdownMenuItem>
+                        {planInfo?.profileId && (
+                          <DropdownMenuItem asChild>
+                            <Link to={`/perfil/${planInfo.profileId}`} className="flex items-center gap-2 cursor-pointer">
+                              <ShoppingBag className="h-4 w-4" /> Ver perfil
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <Link
+                      to="/cadastro?tipo=conteudo"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-dashed border-muted-foreground/40 hover:border-primary/50 hover:bg-muted/40 transition-all"
+                    >
+                      <ShoppingBag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <div>
+                        <p className="font-bold text-[11px] leading-tight whitespace-nowrap text-muted-foreground">VENDEDORA DE CONTEÚDOS</p>
+                        <p className="text-[10px] leading-tight text-muted-foreground">Criar perfil</p>
+                      </div>
+                    </Link>
+                  )}
                 </>
               )}
 
@@ -404,50 +447,78 @@ const Navbar = () => {
                   )}
 
                   {/* Botão: Sou Acompanhante */}
-                  <Link
-                    to={profileTypes.includes("acompanhante") ? "/meu-perfil" : "/cadastro?tipo=acompanhante"}
-                    className="block"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <button className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border-2 transition-all text-left ${
-                      profileTypes.includes("acompanhante")
-                        ? "border-primary bg-primary/5"
-                        : "border-dashed border-muted-foreground/40 hover:border-primary/50"
-                    }`}>
-                      <Heart className={`h-4 w-4 shrink-0 ${profileTypes.includes("acompanhante") ? "text-primary" : "text-muted-foreground"}`} />
-                      <div>
-                        <p className={`font-bold text-sm leading-tight ${profileTypes.includes("acompanhante") ? "text-primary" : "text-muted-foreground"}`}>
-                          SOU ACOMPANHANTE
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {profileTypes.includes("acompanhante") ? "Editar perfil" : "Criar perfil"}
-                        </p>
+                  {profileTypes.includes("acompanhante") ? (
+                    <div className="space-y-1">
+                      <div className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border-2 border-primary bg-primary/5 text-left`}>
+                        <Heart className="h-4 w-4 shrink-0 text-primary" />
+                        <div className="flex-1">
+                          <p className="font-bold text-sm leading-tight text-primary">SOU ACOMPANHANTE</p>
+                          <p className="text-xs text-muted-foreground">Selecione uma ação</p>
+                        </div>
                       </div>
-                    </button>
-                  </Link>
+                      <div className="flex gap-2 pl-2">
+                        <Link to="/meu-perfil" onClick={() => setIsOpen(false)} className="flex-1">
+                          <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold transition-colors">
+                            <User className="h-3.5 w-3.5" /> Editar perfil
+                          </button>
+                        </Link>
+                        {planInfo?.profileId && (
+                          <Link to={`/perfil/${planInfo.profileId}`} onClick={() => setIsOpen(false)} className="flex-1">
+                            <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-semibold transition-colors">
+                              <Heart className="h-3.5 w-3.5" /> Ver perfil
+                            </button>
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <Link to="/cadastro?tipo=acompanhante" className="block" onClick={() => setIsOpen(false)}>
+                      <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border-2 border-dashed border-muted-foreground/40 hover:border-primary/50 transition-all text-left">
+                        <Heart className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <div>
+                          <p className="font-bold text-sm leading-tight text-muted-foreground">SOU ACOMPANHANTE</p>
+                          <p className="text-xs text-muted-foreground">Criar perfil</p>
+                        </div>
+                      </button>
+                    </Link>
+                  )}
 
                   {/* Botão: Vendedora de Conteúdos */}
-                  <Link
-                    to={profileTypes.includes("conteudo") ? "/meu-perfil" : "/cadastro?tipo=conteudo"}
-                    className="block"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <button className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border-2 transition-all text-left ${
-                      profileTypes.includes("conteudo")
-                        ? "border-primary bg-primary/5"
-                        : "border-dashed border-muted-foreground/40 hover:border-primary/50"
-                    }`}>
-                      <ShoppingBag className={`h-4 w-4 shrink-0 ${profileTypes.includes("conteudo") ? "text-primary" : "text-muted-foreground"}`} />
-                      <div>
-                        <p className={`font-bold text-sm leading-tight ${profileTypes.includes("conteudo") ? "text-primary" : "text-muted-foreground"}`}>
-                          VENDEDORA DE CONTEÚDOS
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {profileTypes.includes("conteudo") ? "Editar perfil" : "Criar perfil"}
-                        </p>
+                  {profileTypes.includes("conteudo") ? (
+                    <div className="space-y-1">
+                      <div className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border-2 border-primary bg-primary/5 text-left">
+                        <ShoppingBag className="h-4 w-4 shrink-0 text-primary" />
+                        <div className="flex-1">
+                          <p className="font-bold text-sm leading-tight text-primary">VENDEDORA DE CONTEÚDOS</p>
+                          <p className="text-xs text-muted-foreground">Selecione uma ação</p>
+                        </div>
                       </div>
-                    </button>
-                  </Link>
+                      <div className="flex gap-2 pl-2">
+                        <Link to="/meu-perfil" onClick={() => setIsOpen(false)} className="flex-1">
+                          <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold transition-colors">
+                            <User className="h-3.5 w-3.5" /> Editar perfil
+                          </button>
+                        </Link>
+                        {planInfo?.profileId && (
+                          <Link to={`/perfil/${planInfo.profileId}`} onClick={() => setIsOpen(false)} className="flex-1">
+                            <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-semibold transition-colors">
+                              <ShoppingBag className="h-3.5 w-3.5" /> Ver perfil
+                            </button>
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <Link to="/cadastro?tipo=conteudo" className="block" onClick={() => setIsOpen(false)}>
+                      <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border-2 border-dashed border-muted-foreground/40 hover:border-primary/50 transition-all text-left">
+                        <ShoppingBag className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <div>
+                          <p className="font-bold text-sm leading-tight text-muted-foreground">VENDEDORA DE CONTEÚDOS</p>
+                          <p className="text-xs text-muted-foreground">Criar perfil</p>
+                        </div>
+                      </button>
+                    </Link>
+                  )}
 
                   <Button variant="outline" className="w-full gap-2" onClick={() => { setIsOpen(false); handleSignOut(); }}>
                     <LogOut className="h-4 w-4" /> Sair
@@ -593,7 +664,7 @@ const Navbar = () => {
           </div>
           <div className="px-3 pb-3">
             <Button className="w-full gap-2" disabled={!selectedNewPlan || planSaving} onClick={handleChangePlan}>
-              {planSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Alterando...</> : "Confirmar plano"}
+              {planSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Aguarde...</> : selectedNewPlan && selectedNewPlan !== "free" ? "Ir ao pagamento →" : "Confirmar plano"}
             </Button>
           </div>
         </DialogContent>

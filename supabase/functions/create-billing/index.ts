@@ -1,15 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ABACATEPAY_API = "https://api.abacatepay.com/v1";
-const ABACATEPAY_KEY = Deno.env.get("ABACATEPAY_API_KEY") ?? "";
+const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 const SITE_URL = Deno.env.get("SITE_URL") ?? "http://localhost:5173";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-const PLAN_PRODUCTS: Record<string, { name: string; price: number; externalId: string }> = {
-  monthly: { name: "Plano Mensal", price: 990, externalId: "plan_monthly" },
-  yearly:  { name: "Plano Anual",  price: 9990, externalId: "plan_yearly"  },
+const PLAN_PRICES: Record<string, { name: string; amount: number; currency: string }> = {
+  monthly: { name: "Plano Mensal - X Model Privê", amount: 990,  currency: "brl" },
+  yearly:  { name: "Plano Anual - X Model Privê",  amount: 9990, currency: "brl" },
 };
 
 const corsHeaders = {
@@ -33,8 +32,8 @@ serve(async (req) => {
       });
     }
 
-    const product = PLAN_PRODUCTS[planId];
-    if (!product) {
+    const price = PLAN_PRICES[planId];
+    if (!price) {
       return new Response(JSON.stringify({ error: "Plano inválido" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -51,48 +50,43 @@ serve(async (req) => {
       email = user?.email ?? "cliente@email.com";
     }
 
-    const payload = {
-      frequency: "ONE_TIME",
-      methods: ["PIX", "CREDIT_CARD"],
-      products: [
-        {
-          externalId: product.externalId,
-          name: product.name,
-          quantity: 1,
-          price: product.price,
-        },
-      ],
-      returnUrl: `${SITE_URL}/planos`,
-      completionUrl: `${SITE_URL}/pagamento-confirmado?plan=${planId}&profileId=${profileId}`,
-      externalId: `${profileId}:${planId}`,
-      customer: {
-        name: customerName || "Cliente",
-        email,
-        cellphone: customerPhone || "11999999999",
-        taxId: customerTaxId || "000.000.000-00",
-      },
-    };
+    // Cria Checkout Session no Stripe
+    const params = new URLSearchParams({
+      "payment_method_types[0]": "card",
+      "line_items[0][price_data][currency]": price.currency,
+      "line_items[0][price_data][product_data][name]": price.name,
+      "line_items[0][price_data][unit_amount]": String(price.amount),
+      "line_items[0][quantity]": "1",
+      "mode": "payment",
+      "customer_email": email,
+      "success_url": `${SITE_URL}/pagamento-confirmado?plan=${planId}&profileId=${profileId}&session_id={CHECKOUT_SESSION_ID}`,
+      "cancel_url": `${SITE_URL}/planos`,
+      "metadata[profileId]": profileId,
+      "metadata[planId]": planId,
+    });
 
-    const response = await fetch(`${ABACATEPAY_API}/billing/create`, {
+    if (customerName) params.set("customer_creation", "always");
+
+    const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${ABACATEPAY_KEY}`,
+        "Authorization": `Bearer ${STRIPE_SECRET_KEY}`,
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: JSON.stringify(payload),
+      body: params.toString(),
     });
 
     const result = await response.json();
 
     if (!response.ok) {
-      console.error("AbacatePay error:", result);
-      return new Response(JSON.stringify({ error: result?.error ?? "Erro ao criar cobrança" }), {
+      console.error("Stripe error:", result);
+      return new Response(JSON.stringify({ error: result?.error?.message ?? "Erro ao criar sessão de pagamento" }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ url: result.data.url, billingId: result.data.id }), {
+    return new Response(JSON.stringify({ url: result.url, sessionId: result.id }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

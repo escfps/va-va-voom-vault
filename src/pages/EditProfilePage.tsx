@@ -50,6 +50,9 @@ const EditProfilePage = () => {
   const [newPhotos, setNewPhotos] = useState<File[]>([]);
   const [newPreviews, setNewPreviews] = useState<string[]>([]);
   const [removedImages, setRemovedImages] = useState<string[]>([]);
+  const [newPhotosFirst, setNewPhotosFirst] = useState(false);
+  const [selectedProfilePhoto, setSelectedProfilePhoto] = useState<string | null>(null);
+  const [selectedCoverPhoto, setSelectedCoverPhoto] = useState<string | null>(null);
   const [verificationVideo, setVerificationVideo] = useState<File | null>(null);
   const [contentMedia, setContentMedia] = useState<string[]>([]);
   const [contentUploading, setContentUploading] = useState(false);
@@ -105,6 +108,8 @@ const EditProfilePage = () => {
       setProfileId(data.id);
       setProfileStatus(data.status ?? "pending");
       setExistingImages(data.images || []);
+      setSelectedProfilePhoto(data.image || (data.images?.[0] ?? null));
+      setSelectedCoverPhoto(data.cover_image || (data.images?.[0] ?? null));
       setCurrentPlan(data.plan || "free");
       setPlanExpiresAt(data.plan_expires_at || null);
 
@@ -239,7 +244,7 @@ const EditProfilePage = () => {
       const { error } = await supabase
         .from("profiles")
         .update({ images: updated, image: updated[0], cover_image: updated[0] })
-        .eq("user_id", user.id);
+        .eq("id", profileId!);
       if (!error) {
         setContentMedia(updated);
         setExistingImages(updated);
@@ -271,17 +276,43 @@ const EditProfilePage = () => {
     const { error } = await supabase
       .from("profiles")
       .update({ images: updated, image: updated[0] ?? null, cover_image: updated[0] ?? null })
-      .eq("user_id", user!.id);
+      .eq("id", profileId!);
     if (!error) { setContentMedia(updated); setExistingImages(updated); toast.success("Arquivo removido"); }
     else { toast.error("Erro ao remover: " + error.message); }
   };
 
-  const setContentAsCover = async (url: string) => {
+  const setAsProfilePhoto = async (url: string) => {
+    if (isVideoUrl(url) && !isYearlyPlan) {
+      toast.error("Vídeo como foto de perfil é exclusivo do Plano Anual.");
+      return;
+    }
     const { error } = await supabase
       .from("profiles")
-      .update({ image: url, cover_image: url })
-      .eq("user_id", user!.id);
-    if (!error) toast.success("Foto principal atualizada!");
+      .update({ image: url })
+      .eq("id", profileId!);
+    if (!error) {
+      setSelectedProfilePhoto(url);
+      toast.success("Foto de perfil atualizada!");
+    } else {
+      toast.error("Erro ao atualizar: " + error.message);
+    }
+  };
+
+  const setAsCoverPhoto = async (url: string) => {
+    if (isVideoUrl(url) && !isYearlyPlan) {
+      toast.error("Vídeo como capa é exclusivo do Plano Anual.");
+      return;
+    }
+    const { error } = await supabase
+      .from("profiles")
+      .update({ cover_image: url })
+      .eq("id", profileId!);
+    if (!error) {
+      setSelectedCoverPhoto(url);
+      toast.success("Foto de capa atualizada!");
+    } else {
+      toast.error("Erro ao atualizar: " + error.message);
+    }
   };
 
   // ── Escort profile save ──────────────────────────────────────────────────────
@@ -293,12 +324,20 @@ const EditProfilePage = () => {
     setSaving(true);
     try {
       const uploadedUrls = await uploadNewPhotos();
-      const finalImages = [
-        ...existingImages.filter((url) => !removedImages.includes(url)),
-        ...uploadedUrls,
-      ];
+      const filteredExisting = existingImages.filter((url) => !removedImages.includes(url));
+      const finalImages = newPhotosFirst
+        ? [...uploadedUrls, ...filteredExisting]
+        : [...filteredExisting, ...uploadedUrls];
 
       if (finalImages.length === 0) { toast.error("Adicione pelo menos 1 foto ou vídeo"); setSaving(false); return; }
+
+      // Foto de perfil e capa: usa seleção manual ou cai para a primeira da lista
+      const resolvedProfilePhoto = selectedProfilePhoto && finalImages.includes(selectedProfilePhoto)
+        ? selectedProfilePhoto
+        : finalImages[0];
+      const resolvedCoverPhoto = selectedCoverPhoto && finalImages.includes(selectedCoverPhoto)
+        ? selectedCoverPhoto
+        : finalImages[0];
 
       const pricingDb = pricing.filter((p) => p.price).map((p) => ({ duration: p.duration, price: parseInt(p.price) }));
 
@@ -316,9 +355,9 @@ const EditProfilePage = () => {
           description: form.description,
           tagline: form.tagline,
           price: parseInt(form.price),
-          image: finalImages[0],
+          image: resolvedProfilePhoto,
           images: finalImages,
-          cover_image: finalImages[0],
+          cover_image: resolvedCoverPhoto,
           height: form.height,
           weight: form.weight,
           ethnicity: form.ethnicity,
@@ -380,15 +419,22 @@ const EditProfilePage = () => {
 
   const handleChangePlan = async () => {
     if (!selectedNewPlan || !profileId || !user) return;
+
+    // Planos pagos: redireciona para o checkout com PIX
+    if (selectedNewPlan !== "free") {
+      navigate("/planos", { state: { profileId, preselectedPlan: selectedNewPlan } });
+      return;
+    }
+
+    // Downgrade para free: aplica direto
     setPlanSaving(true);
     try {
       await updatePlan(profileId, selectedNewPlan);
       setCurrentPlan(selectedNewPlan);
-      setPlanExpiresAt(getPlanExpiresAt(selectedNewPlan));
+      setPlanExpiresAt(null);
       setShowPlanChange(false);
       setSelectedNewPlan(null);
-      const planName = selectedNewPlan === "free" ? "Gratuito" : selectedNewPlan === "monthly" ? "Mensal" : "Anual";
-      toast.success(`Plano alterado para ${planName} com sucesso!`);
+      toast.success("Plano alterado para Gratuito.");
     } catch (err) {
       console.error(err);
       toast.error("Erro ao alterar plano");
@@ -675,41 +721,74 @@ const EditProfilePage = () => {
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground border-b border-border pb-2">Suas fotos e vídeos</h3>
                     <p className="text-sm text-muted-foreground">
-                      {isYearlyPlan
-                        ? "Fotos e vídeos ilimitados. O primeiro será sua mídia principal (capa e avatar)."
-                        : isPaidPlan
-                        ? "Fotos ilimitadas. Vídeo como foto principal e capa requer o Plano Anual."
-                        : "Plano Gratuito: até 3 fotos. Vídeo como foto principal requer o Plano Anual."}
+                      {isYearlyPlan ? "Fotos e vídeos ilimitados." : isPaidPlan ? "Fotos ilimitadas." : "Plano Gratuito: até 3 fotos."}
+                      {" "}Passe o mouse para definir perfil e capa separadamente.
                     </p>
+                    {(activeImages.length + newPreviews.length) > 0 && (
+                      <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-primary inline-block" /> Foto de perfil</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-purple-500 inline-block" /> Foto de capa</span>
+                        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-yellow-400 inline-block" /> Perfil e capa</span>
+                      </div>
+                    )}
                     <div className="grid grid-cols-3 gap-3">
-                      {activeImages.map((src, i) => (
-                        <div key={src} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-border">
-                          {isVideoUrl(src) ? (
-                            <video src={src} className="w-full h-full object-cover" muted playsInline />
-                          ) : (
-                            <img src={src} alt={`Mídia ${i + 1}`} className="w-full h-full object-cover" />
-                          )}
-                          {i === 0 && newPhotos.length === 0 && (
-                            <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">Principal</span>
-                          )}
-                          <button type="button" onClick={() => removeExistingImage(src)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                      {newPreviews.map((src, i) => (
-                        <div key={`new-${i}`} className="relative aspect-[3/4] rounded-lg overflow-hidden border-2 border-primary/30">
-                          {newPhotos[i]?.type.startsWith("video/") ? (
-                            <video src={src} className="w-full h-full object-cover" muted playsInline />
-                          ) : (
-                            <img src={src} alt={`Nova mídia ${i + 1}`} className="w-full h-full object-cover" />
-                          )}
-                          <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">Nova</span>
-                          <button type="button" onClick={() => removeNewPhoto(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      ))}
+                      {activeImages.map((src) => {
+                        const isProfile = src === selectedProfilePhoto;
+                        const isCover = src === selectedCoverPhoto;
+                        const isVideo = isVideoUrl(src);
+                        return (
+                          <div key={src} className={`relative flex flex-col rounded-lg overflow-hidden border-2 transition-all ${isProfile && isCover ? "border-yellow-400" : isProfile ? "border-primary" : isCover ? "border-purple-500" : "border-border"}`}>
+                            <div className="relative aspect-[3/4]">
+                              {isVideo ? (
+                                <video src={src} className="w-full h-full object-cover" muted playsInline />
+                              ) : (
+                                <img src={src} alt="Mídia" className="w-full h-full object-cover" />
+                              )}
+                              <div className="absolute top-1 left-1 flex flex-col gap-0.5">
+                                {isProfile && <span className="bg-primary text-primary-foreground text-[9px] px-1 py-0.5 rounded font-bold">PERFIL</span>}
+                                {isCover && <span className="bg-purple-500 text-white text-[9px] px-1 py-0.5 rounded font-bold">CAPA</span>}
+                              </div>
+                              <button type="button" onClick={() => removeExistingImage(src)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                            {(!isVideo || isYearlyPlan) && (
+                              <div className="flex gap-1 p-1 bg-muted">
+                                <button type="button" onClick={() => setSelectedProfilePhoto(src)} disabled={isProfile}
+                                  className={`flex-1 text-[9px] py-1 rounded font-bold flex items-center justify-center gap-0.5 transition-colors ${isProfile ? "bg-primary text-white cursor-default" : "bg-background border border-primary text-primary hover:bg-primary hover:text-white"}`}>
+                                  <Camera className="h-2.5 w-2.5" /> {isProfile ? "Perfil ✓" : "Perfil"}
+                                </button>
+                                <button type="button" onClick={() => setSelectedCoverPhoto(src)} disabled={isCover}
+                                  className={`flex-1 text-[9px] py-1 rounded font-bold flex items-center justify-center gap-0.5 transition-colors ${isCover ? "bg-purple-500 text-white cursor-default" : "bg-background border border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white"}`}>
+                                  <ImageIcon className="h-2.5 w-2.5" /> {isCover ? "Capa ✓" : "Capa"}
+                                </button>
+                              </div>
+                            )}
+                            {isVideo && !isYearlyPlan && (
+                              <div className="p-1 bg-muted text-center text-[9px] text-muted-foreground">Plano Anual p/ usar como capa</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {newPreviews.map((src, i) => {
+                        const isVideo = newPhotos[i]?.type.startsWith("video/");
+                        return (
+                          <div key={`new-${i}`} className="relative flex flex-col rounded-lg overflow-hidden border-2 border-primary/30">
+                            <div className="relative aspect-[3/4]">
+                              {isVideo ? (
+                                <video src={src} className="w-full h-full object-cover" muted playsInline />
+                              ) : (
+                                <img src={src} alt={`Nova mídia ${i + 1}`} className="w-full h-full object-cover" />
+                              )}
+                              <span className="absolute bottom-1 left-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded">Nova</span>
+                              <button type="button" onClick={() => removeNewPhoto(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                            <div className="p-1 bg-muted text-center text-[9px] text-muted-foreground">Salve para selecionar como perfil/capa</div>
+                          </div>
+                        );
+                      })}
                       {(isPaidPlan || totalImages < photoLimit) && (
                         <button type="button" onClick={() => fileInputRef.current?.click()} className="aspect-[3/4] rounded-lg border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                           <Camera className="h-6 w-6" /><span className="text-xs">Adicionar</span>
@@ -854,6 +933,7 @@ const EditProfilePage = () => {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base flex items-center justify-between">
                     <span>Sua galeria</span>
+
                     {contentMedia.length > 0 && (
                       <span className="text-xs text-muted-foreground font-normal">
                         {contentMedia.length} arquivo{contentMedia.length !== 1 ? "s" : ""}
@@ -862,6 +942,14 @@ const EditProfilePage = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {contentMedia.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3 text-[11px]">
+                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-primary inline-block" /> Foto de perfil</span>
+                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-purple-500 inline-block" /> Foto de capa</span>
+                      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border-2 border-yellow-400 inline-block" /> Perfil e capa</span>
+                      <span className="text-muted-foreground">— passe o mouse para trocar</span>
+                    </div>
+                  )}
                   {contentMedia.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <Camera className="h-10 w-10 mx-auto mb-3 opacity-40" />
@@ -870,34 +958,79 @@ const EditProfilePage = () => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {contentMedia.map((url, i) => (
-                        <div key={url} className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted">
-                          {isVideoUrl(url) ? (
+                      {contentMedia.map((url) => {
+                        const isProfile = url === selectedProfilePhoto;
+                        const isCover = url === selectedCoverPhoto;
+                        const isVideo = isVideoUrl(url);
+                        const canSetVideo = isYearlyPlan;
+                        return (
+                        <div key={url} className={`relative group aspect-square rounded-lg overflow-hidden border-2 bg-muted transition-all ${isProfile && isCover ? "border-yellow-400" : isProfile ? "border-primary" : isCover ? "border-purple-500" : "border-border"}`}>
+                          {isVideo ? (
                             <div className="w-full h-full flex items-center justify-center bg-black/80">
                               <video src={url} className="w-full h-full object-cover" muted playsInline />
-                              <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                 <Video className="h-8 w-8 text-white/80" />
                               </div>
                             </div>
                           ) : (
-                            <img src={url} alt={`Mídia ${i + 1}`} className="w-full h-full object-cover" />
+                            <img src={url} alt="Mídia" className="w-full h-full object-cover" />
                           )}
-                          <div className="absolute top-1.5 left-1.5 flex gap-1">
-                            {i === 0 && <span className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded font-medium">Principal</span>}
-                            {isVideoUrl(url) && <span className="bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">Vídeo</span>}
+
+                          {/* Badges de seleção */}
+                          <div className="absolute top-1.5 left-1.5 flex flex-col gap-0.5">
+                            {isProfile && (
+                              <span className="bg-primary text-primary-foreground text-[9px] px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5">
+                                <Camera className="h-2.5 w-2.5" /> PERFIL
+                              </span>
+                            )}
+                            {isCover && (
+                              <span className="bg-purple-500 text-white text-[9px] px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5">
+                                <ImageIcon className="h-2.5 w-2.5" /> CAPA
+                              </span>
+                            )}
+                            {isVideo && (
+                              <span className="bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded">Vídeo</span>
+                            )}
                           </div>
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                            {!isVideoUrl(url) && i !== 0 && (
-                              <button type="button" onClick={() => setContentAsCover(url)} className="p-1.5 bg-white/20 hover:bg-white/30 rounded-full transition-colors">
-                                <Eye className="h-4 w-4 text-white" />
+
+                          {/* Botões de ação ao hover */}
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2">
+                            {(!isVideo || canSetVideo) && (
+                              <button
+                                type="button"
+                                onClick={() => setAsProfilePhoto(url)}
+                                disabled={isProfile}
+                                className={`w-full text-[10px] px-2 py-1 rounded font-bold flex items-center justify-center gap-1 transition-colors ${isProfile ? "bg-primary/50 text-white cursor-default" : "bg-primary hover:bg-primary/80 text-white"}`}
+                              >
+                                <Camera className="h-3 w-3" />
+                                {isProfile ? "Foto de perfil" : "Definir como perfil"}
                               </button>
                             )}
-                            <button type="button" onClick={() => handleContentDelete(url)} className="p-1.5 bg-destructive/80 hover:bg-destructive rounded-full transition-colors">
-                              <Trash2 className="h-4 w-4 text-white" />
+                            {(!isVideo || canSetVideo) && (
+                              <button
+                                type="button"
+                                onClick={() => setAsCoverPhoto(url)}
+                                disabled={isCover}
+                                className={`w-full text-[10px] px-2 py-1 rounded font-bold flex items-center justify-center gap-1 transition-colors ${isCover ? "bg-purple-500/50 text-white cursor-default" : "bg-purple-500 hover:bg-purple-600 text-white"}`}
+                              >
+                                <ImageIcon className="h-3 w-3" />
+                                {isCover ? "Foto de capa" : "Definir como capa"}
+                              </button>
+                            )}
+                            {isVideo && !canSetVideo && (
+                              <span className="text-[9px] text-yellow-300 text-center font-medium">Plano Anual p/ usar vídeo como perfil/capa</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleContentDelete(url)}
+                              className="w-full text-[10px] px-2 py-1 rounded bg-destructive hover:bg-destructive/80 text-white font-bold flex items-center justify-center gap-1 transition-colors"
+                            >
+                              <Trash2 className="h-3 w-3" /> Remover
                             </button>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                       <button
                         type="button"
                         disabled={contentUploading}
@@ -1077,7 +1210,9 @@ const EditProfilePage = () => {
                     className="w-full gap-2"
                   >
                     {planSaving ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Alterando plano...</>
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Aguarde...</>
+                    ) : selectedNewPlan && selectedNewPlan !== "free" ? (
+                      "Ir para pagamento →"
                     ) : (
                       "Confirmar mudança de plano"
                     )}

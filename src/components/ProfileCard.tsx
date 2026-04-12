@@ -97,7 +97,7 @@ const ProfileCard = ({
           {isMonthly && (
             <Badge className="bg-red-500 text-white gap-1 text-xs font-bold tracking-wide">
               <Star className="h-3 w-3 fill-white text-white" />
-              MENSAL
+              VIP
             </Badge>
           )}
         </div>
