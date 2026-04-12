@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useSeo } from "@/lib/useSeo";
 
 const isVideoUrl = (url: string) => /\.(mp4|mov|webm|avi|mkv|m4v)(\?.*)?$/i.test(url);
 
@@ -88,6 +89,17 @@ const ProfileDetail = () => {
   const [activeTab, setActiveTab] = useState<"fotos" | "sobre" | "avaliacoes">("fotos");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [expandedService, setExpandedService] = useState<string | null>(null);
+
+  useSeo({
+    title: profile ? `${profile.name}, ${profile.age} anos em ${profile.city} - ${profile.state}` : "Acompanhante",
+    description: profile
+      ? `${profile.name}, ${profile.age} anos, acompanhante em ${profile.city} - ${profile.state}. ${profile.tagline || profile.description?.slice(0, 120) || "Perfil verificado com fotos exclusivas."}`
+      : undefined,
+    keywords: profile
+      ? `acompanhante ${profile.city}, acompanhante ${profile.state}, ${profile.name}, acompanhante verificada`
+      : undefined,
+    canonical: profile ? `https://xmodelprive.com/perfil/${profile.id}` : undefined,
+  });
 
   if (isLoading) {
     return (

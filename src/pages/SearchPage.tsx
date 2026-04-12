@@ -8,11 +8,23 @@ import { fetchProfiles } from "@/lib/profiles";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSeo } from "@/lib/useSeo";
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const cidadeParam = searchParams.get("cidade") || "";
   const [search, setSearch] = useState(cidadeParam);
+
+  useSeo({
+    title: cidadeParam ? `Acompanhantes em ${cidadeParam}` : "Buscar Acompanhantes",
+    description: cidadeParam
+      ? `Encontre acompanhantes verificadas em ${cidadeParam}. Perfis reais com fotos, avaliações e contato direto via WhatsApp.`
+      : "Busque acompanhantes verificadas por cidade em todo o Brasil. Perfis reais com fotos e contato direto.",
+    keywords: cidadeParam
+      ? `acompanhante ${cidadeParam}, acompanhantes em ${cidadeParam}, modelo ${cidadeParam}`
+      : "buscar acompanhantes, acompanhantes por cidade, acompanhantes Brasil",
+    canonical: cidadeParam ? `https://xmodelprive.com/busca?cidade=${cidadeParam}` : "https://xmodelprive.com/busca",
+  });
 
   const { data: allProfiles = [], isLoading } = useQuery({
     queryKey: ["profiles"],
