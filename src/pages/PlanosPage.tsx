@@ -5,11 +5,56 @@ import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Check, X, Star, Zap, Loader2, PartyPopper } from "lucide-react";
+import { Check, X, Star, Zap, Copy, Mail, PartyPopper } from "lucide-react";
 
+// ── PIX QR Code helpers ────────────────────────────────────────────────────
+function pixField(id: string, value: string): string {
+  return `${id}${String(value.length).padStart(2, "0")}${value}`;
+}
+
+function crc16(str: string): string {
+  let crc = 0xffff;
+  for (let i = 0; i < str.length; i++) {
+    crc ^= str.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
+    }
+  }
+  return (crc & 0xffff).toString(16).toUpperCase().padStart(4, "0");
+}
+
+function buildPixPayload(key: string, amount: string, name: string, city: string): string {
+  const merchantAccount = pixField(
+    "26",
+    pixField("00", "BR.GOV.BCB.PIX") + pixField("01", key),
+  );
+  const additionalData = pixField("62", pixField("05", "***"));
+  const base = [
+    pixField("00", "01"),
+    pixField("01", "11"),
+    merchantAccount,
+    pixField("52", "0000"),
+    pixField("53", "986"),
+    pixField("54", amount),
+    pixField("58", "BR"),
+    pixField("59", name.slice(0, 25)),
+    pixField("60", city.slice(0, 15)),
+    additionalData,
+    "6304",
+  ].join("");
+  return base + crc16(base);
+}
+
+const PIX_KEY = "pix.texasgramado@gmail.com";
+const CONTACT_EMAIL = "contato@xmodelprive.com";
+
+const PIX_PAYLOADS: Record<string, string> = {
+  monthly: buildPixPayload(PIX_KEY, "9.90", "X MODEL PRIVE", "GRAMADO"),
+  yearly:  buildPixPayload(PIX_KEY, "99.90", "X MODEL PRIVE", "GRAMADO"),
+};
+
+// ── Plans ──────────────────────────────────────────────────────────────────
 const PLANS = [
   {
     id: "free",
@@ -55,22 +100,19 @@ const PLANS = [
   },
 ];
 
+// ── Component ──────────────────────────────────────────────────────────────
 const PlanosPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [customerTaxId, setCustomerTaxId] = useState("");
+  const [pixStep, setPixStep] = useState(false);
 
   const locationState = location.state as { profileId?: string; preselectedPlan?: string } | null;
   const profileId = locationState?.profileId;
   const preselectedPlan = locationState?.preselectedPlan;
 
-  // Pré-seleciona o plano se veio do EditProfilePage
   useEffect(() => { if (preselectedPlan) setSelectedPlan(preselectedPlan); }, [preselectedPlan]);
 
   const isPaidPlan = selectedPlan && selectedPlan !== "free";
@@ -78,73 +120,126 @@ const PlanosPage = () => {
   const handleConfirm = async () => {
     if (!selectedPlan || !user) return;
 
-    if (isPaidPlan && (!customerName.trim() || !customerPhone.trim() || !customerTaxId.trim())) {
-      toast.error("Preencha nome, telefone e CPF para continuar.");
+    if (isPaidPlan) {
+      setPixStep(true);
       return;
     }
 
+    // Plano gratuito
     setLoading(true);
     try {
-      if (selectedPlan === "free") {
-        if (profileId) {
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-          const { data: { session } } = await supabase.auth.getSession();
-          const token = session?.access_token ?? supabaseKey;
-          await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${profileId}`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              "apikey": supabaseKey,
-              "Authorization": `Bearer ${token}`,
-              "Prefer": "return=minimal",
-            },
-            body: JSON.stringify({ plan: "free", plan_expires_at: null, verified: false }),
-          });
-        }
-        toast.success("Perfil enviado para análise! Você será notificada quando for aprovado.");
-        navigate("/meu-perfil");
-        return;
-      }
-
-      // Plano pago → chama Edge Function para criar cobrança no AbacatePay
-      const { data: { session } } = await supabase.auth.getSession();
-
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-billing`,
-        {
-          method: "POST",
+      if (profileId) {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token ?? supabaseKey;
+        await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${profileId}`, {
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${token}`,
+            "Prefer": "return=minimal",
           },
-          body: JSON.stringify({
-            planId: selectedPlan,
-            profileId,
-            customerName: customerName.trim(),
-            customerPhone: customerPhone.replace(/\D/g, ""),
-            customerTaxId: customerTaxId.replace(/\D/g, ""),
-          }),
-        }
-      );
-
-      const result = await res.json();
-
-      if (!res.ok || result.error) {
-        toast.error("Erro ao iniciar pagamento: " + (result.error ?? "Tente novamente."));
-        setLoading(false);
-        return;
+          body: JSON.stringify({ plan: "free", plan_expires_at: null, verified: false }),
+        });
       }
-
-      // Redireciona para a página de pagamento do AbacatePay
-      window.location.href = result.url;
+      toast.success("Perfil enviado para análise! Você será notificada quando for aprovado.");
+      navigate("/meu-perfil");
     } catch (err: any) {
-      console.error("Unexpected error:", err);
-      toast.error(`Erro inesperado: ${err?.message ?? err}`);
+      toast.error(`Erro: ${err?.message ?? err}`);
+    } finally {
       setLoading(false);
     }
   };
+
+  const copyPixKey = () => {
+    navigator.clipboard.writeText(PIX_KEY);
+    toast.success("Chave PIX copiada!");
+  };
+
+  const plan = PLANS.find((p) => p.id === selectedPlan);
+  const pixPayload = selectedPlan && PIX_PAYLOADS[selectedPlan] ? PIX_PAYLOADS[selectedPlan] : "";
+  const qrUrl = pixPayload
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(pixPayload)}`
+    : "";
+
+  if (pixStep && isPaidPlan && plan) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 py-10">
+          <div className="max-w-sm mx-auto px-4 space-y-6">
+            {/* Cabeçalho */}
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-foreground">Pagar via PIX</h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Plano <strong>{plan.name}</strong> · <strong>{plan.label}</strong>
+              </p>
+            </div>
+
+            {/* QR Code */}
+            <div className="flex flex-col items-center gap-3 p-6 rounded-xl border border-border bg-white">
+              {qrUrl && (
+                <img
+                  src={qrUrl}
+                  alt="QR Code PIX"
+                  className="w-52 h-52 rounded-lg"
+                />
+              )}
+              <p className="text-xs text-gray-500 text-center">
+                Escaneie o QR code no seu app do banco
+              </p>
+            </div>
+
+            {/* Chave PIX para copiar */}
+            <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Chave PIX</p>
+              <div className="flex items-center gap-2">
+                <p className="flex-1 text-sm font-medium text-foreground break-all">{PIX_KEY}</p>
+                <button
+                  onClick={copyPixKey}
+                  className="shrink-0 p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Valor: <strong className="text-foreground">{plan.label}</strong>
+              </p>
+            </div>
+
+            {/* Instruções */}
+            <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4 space-y-2">
+              <p className="text-sm font-semibold text-foreground">Após realizar o pagamento:</p>
+              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Tire um print do comprovante</li>
+                <li>Envie para o e-mail abaixo com seu nome</li>
+                <li>Seu plano será ativado em até 24h</li>
+              </ol>
+            </div>
+
+            {/* Botão e-mail */}
+            <a
+              href={`mailto:${CONTACT_EMAIL}?subject=Comprovante PIX - Plano ${plan.name}&body=Olá! Segue o comprovante do pagamento do Plano ${plan.name} (${plan.label}).`}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
+            >
+              <Mail className="h-4 w-4" />
+              Enviar comprovante por e-mail
+            </a>
+
+            <button
+              onClick={() => setPixStep(false)}
+              className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Voltar aos planos
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -223,57 +318,12 @@ const PlanosPage = () => {
             ))}
           </div>
 
-          {/* Dados para pagamento (só planos pagos) */}
-          {isPaidPlan && (
-            <div className="mt-6 space-y-3 p-4 rounded-xl border border-border bg-muted/30">
-              <p className="text-sm font-medium text-foreground">Dados para pagamento</p>
-              <div className="space-y-2">
-                <div>
-                  <Label htmlFor="customerName" className="text-xs">Nome completo</Label>
-                  <Input
-                    id="customerName"
-                    placeholder="Seu nome completo"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="customerPhone" className="text-xs">Telefone (WhatsApp)</Label>
-                  <Input
-                    id="customerPhone"
-                    placeholder="(11) 99999-9999"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="customerTaxId" className="text-xs">CPF</Label>
-                  <Input
-                    id="customerTaxId"
-                    placeholder="000.000.000-00"
-                    value={customerTaxId}
-                    onChange={(e) => setCustomerTaxId(e.target.value)}
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Você será redirecionado para a página de pagamento segura (PIX ou cartão).
-              </p>
-            </div>
-          )}
-
           <Button
             onClick={handleConfirm}
             className="w-full mt-6 gap-2"
             disabled={!selectedPlan || loading}
           >
-            {loading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Aguarde...</>
-            ) : isPaidPlan ? (
-              "Ir para pagamento"
-            ) : (
-              "Confirmar plano gratuito"
-            )}
+            {isPaidPlan ? "Ver instruções de pagamento →" : "Confirmar plano gratuito"}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground mt-3">
