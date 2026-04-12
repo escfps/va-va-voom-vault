@@ -72,9 +72,9 @@ function mapDbToProfile(row: any): Profile {
 }
 
 export async function fetchProfiles(): Promise<Profile[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase
     .from("profiles")
-    .select("*")
+    .select("*") as any)
     .eq("status", "approved");
 
   if (error) {
