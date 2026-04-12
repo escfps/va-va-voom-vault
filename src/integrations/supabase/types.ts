@@ -77,6 +77,8 @@ export type Database = {
           phone: string | null
           piercings: boolean | null
           places_served: string | null
+          plan: string | null
+          plan_expires_at: string | null
           price: number
           price_duration: string | null
           pricing: Json | null
@@ -92,6 +94,7 @@ export type Database = {
           silicone: boolean | null
           smoker: boolean | null
           state: string
+          status: string | null
           tagline: string | null
           tags: string[] | null
           tattoos: boolean | null
@@ -134,6 +137,8 @@ export type Database = {
           phone?: string | null
           piercings?: boolean | null
           places_served?: string | null
+          plan?: string | null
+          plan_expires_at?: string | null
           price?: number
           price_duration?: string | null
           pricing?: Json | null
@@ -149,6 +154,7 @@ export type Database = {
           silicone?: boolean | null
           smoker?: boolean | null
           state: string
+          status?: string | null
           tagline?: string | null
           tags?: string[] | null
           tattoos?: boolean | null
@@ -191,6 +197,8 @@ export type Database = {
           phone?: string | null
           piercings?: boolean | null
           places_served?: string | null
+          plan?: string | null
+          plan_expires_at?: string | null
           price?: number
           price_duration?: string | null
           pricing?: Json | null
@@ -206,6 +214,7 @@ export type Database = {
           silicone?: boolean | null
           smoker?: boolean | null
           state?: string
+          status?: string | null
           tagline?: string | null
           tags?: string[] | null
           tattoos?: boolean | null

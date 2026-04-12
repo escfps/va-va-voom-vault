@@ -96,10 +96,10 @@ const AdminPage = () => {
   const handleChangeStatus = async (id: string, status: "approved" | "rejected") => {
     setUpdatingStatusId(id);
     try {
-      const { error } = await supabase.rpc("set_profile_status", {
-        profile_id: id,
-        new_status: status,
-      });
+      const { error } = await supabase
+        .from("profiles")
+        .update({ status } as any)
+        .eq("id", id);
 
       if (error) throw new Error(error.message);
 
