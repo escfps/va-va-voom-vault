@@ -49,7 +49,6 @@ const AdminPage = () => {
   const isAdmin = user && ADMIN_EMAILS.includes(user.email ?? "");
 
   useEffect(() => {
-    if (!user) { navigate("/login"); return; }
     if (!isAdmin) { toast.error("Acesso negado."); navigate("/"); return; }
     fetchProfiles();
   }, [user]);

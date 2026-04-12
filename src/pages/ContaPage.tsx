@@ -27,10 +27,6 @@ const ContaPage = () => {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  if (!user) {
-    navigate("/login");
-    return null;
-  }
 
   const handleChangeEmail = async (e: React.FormEvent) => {
     e.preventDefault();

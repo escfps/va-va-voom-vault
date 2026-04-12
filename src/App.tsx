@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import SearchPage from "./pages/SearchPage";
 import ProfileDetail from "./pages/ProfileDetail";
@@ -39,13 +40,13 @@ const App = () => (
             <Route path="/cadastro-usuario" element={<SignupPage />} />
             <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/favoritos" element={<FavoritesPage />} />
-            <Route path="/meu-perfil" element={<EditProfilePage />} />
-            <Route path="/planos" element={<PlanosPage />} />
-            <Route path="/painel-criadora" element={<ContentDashboardPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/conta" element={<ContaPage />} />
-            <Route path="/pagamento-confirmado" element={<PagamentoConfirmadoPage />} />
+            <Route path="/favoritos" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
+            <Route path="/meu-perfil" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
+            <Route path="/planos" element={<ProtectedRoute><PlanosPage /></ProtectedRoute>} />
+            <Route path="/painel-criadora" element={<ProtectedRoute><ContentDashboardPage /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+            <Route path="/conta" element={<ProtectedRoute><ContaPage /></ProtectedRoute>} />
+            <Route path="/pagamento-confirmado" element={<ProtectedRoute><PagamentoConfirmadoPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
