@@ -97,7 +97,10 @@ const RegisterPage = () => {
     urlTipo === "acompanhante" || urlTipo === "conteudo" ? [urlTipo] : [];
 
   // Código de indicação via ?ref=CODIGO
-  const refCode = searchParams.get("ref") ?? "";
+  // Salva no localStorage para não perder se a pessoa precisar fazer login/signup antes
+  const refFromUrl = searchParams.get("ref");
+  if (refFromUrl) localStorage.setItem("referral_ref", refFromUrl);
+  const refCode = refFromUrl || localStorage.getItem("referral_ref") || "";
 
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
@@ -378,6 +381,7 @@ const RegisterPage = () => {
         if (error) {
           toast.error("Erro ao criar perfil: " + error.message);
         } else {
+          localStorage.removeItem("referral_ref"); // limpa após uso
           const tipo = profileTypes.includes("acompanhante") ? "Acompanhante" : "Criadora de conteúdo";
           notifyAdmin(`🆕 *Novo perfil cadastrado!*\n\nNome: ${form.name}\nTipo: ${tipo}\nCidade: ${form.city} - ${form.state}\nE-mail: ${user.email}\n\nAcesse o painel admin para aprovar.`);
           if (profileTypes.includes("acompanhante")) {
@@ -404,8 +408,8 @@ const RegisterPage = () => {
             <CardContent className="pt-6 text-center space-y-4">
               <h2 className="text-xl font-bold">Faça login para continuar</h2>
               <p className="text-muted-foreground">Você precisa estar logado para cadastrar seu perfil.</p>
-              <Button onClick={() => navigate("/login")} className="w-full">Fazer login</Button>
-              <Button variant="outline" onClick={() => navigate("/cadastro-usuario")} className="w-full">Criar conta</Button>
+              <Button onClick={() => navigate(`/login?redirect=/cadastro${refCode ? `?ref=${refCode}` : ""}`)} className="w-full">Fazer login</Button>
+              <Button variant="outline" onClick={() => navigate(`/cadastro-usuario${refCode ? `?ref=${refCode}` : ""}`)} className="w-full">Criar conta</Button>
             </CardContent>
           </Card>
         </main>
