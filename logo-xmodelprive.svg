@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">
+  <defs>
+    <linearGradient id="silverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#c0c0c0;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#a8a8a8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6e6e6e;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#c0c0c0;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#c0c0c0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Fundo preto -->
+  <rect width="800" height="300" fill="#000000"/>
+
+  <!-- Linha decorativa superior -->
+  <rect x="80" y="90" width="640" height="1" fill="url(#lineGrad)" opacity="0.8"/>
+
+  <!-- Texto principal XMODELPRIVE -->
+  <text
+    x="400"
+    y="175"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="62"
+    font-weight="bold"
+    letter-spacing="12"
+    text-anchor="middle"
+    fill="url(#silverGrad)"
+    filter="url(#glow)"
+  >XMODELPRIVE</text>
+
+  <!-- Linha decorativa inferior -->
+  <rect x="80" y="200" width="640" height="1" fill="url(#lineGrad)" opacity="0.8"/>
+
+  <!-- Subtítulo -->
+  <text
+    x="400"
+    y="235"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="13"
+    letter-spacing="8"
+    text-anchor="middle"
+    fill="#888888"
+  >EXCLUSIVE · PREMIUM · MODELS</text>
+</svg>

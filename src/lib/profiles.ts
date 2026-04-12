@@ -71,11 +71,20 @@ function mapDbToProfile(row: any): Profile {
   };
 }
 
+const LISTING_FIELDS = [
+  "id", "name", "age", "city", "state", "tagline", "image", "cover_image",
+  "price", "price_duration", "plan", "verified", "verified_date",
+  "rating", "review_count", "tags", "profile_types", "gender",
+  "is_active", "status", "user_id", "created_at",
+].join(", ");
+
 export async function fetchProfiles(): Promise<Profile[]> {
   const { data, error } = await (supabase
     .from("profiles")
-    .select("*") as any)
-    .eq("status", "approved");
+    .select(LISTING_FIELDS) as any)
+    .eq("status", "approved")
+    .eq("is_active", true)
+    .limit(200);
 
   if (error) {
     console.error("Error fetching profiles:", error);

@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Trash2, Loader2, Search, User, Heart, ShoppingBag, ExternalLink, Shield, Users, CheckCircle, Crown, Pencil, Clock, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -46,6 +47,11 @@ const AdminPage = () => {
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<"all" | "acompanhante" | "conteudo">("all");
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
+
+  // Edição rápida
+  const [quickEditProfile, setQuickEditProfile] = useState<any | null>(null);
+  const [quickEditSaving, setQuickEditSaving] = useState(false); // usado no modal
+  const [quickForm, setQuickForm] = useState({ name: "", age: "", city: "", state: "", phone: "", image: "" });
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email ?? "");
 
@@ -144,6 +150,50 @@ const AdminPage = () => {
       toast.error("Erro ao atualizar plano: " + err.message);
     }
     setUpdatingPlanId(null);
+  };
+
+  const openQuickEdit = (profile: any) => {
+    setQuickEditProfile(profile);
+    setQuickForm({
+      name: profile.name ?? "",
+      age: profile.age?.toString() ?? "",
+      city: profile.city ?? "",
+      state: profile.state ?? "",
+      phone: profile.phone ?? "",
+      image: profile.image ?? "",
+    });
+  };
+
+  const handleQuickSave = async () => {
+    if (!quickEditProfile) return;
+    setQuickEditSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          name: quickForm.name,
+          age: parseInt(quickForm.age) || quickEditProfile.age,
+          city: quickForm.city,
+          state: quickForm.state,
+          phone: quickForm.phone,
+          image: quickForm.image,
+        } as any)
+        .eq("id", quickEditProfile.id);
+
+      if (error) throw new Error(error.message);
+      toast.success("Perfil atualizado!");
+      setProfiles((prev) =>
+        prev.map((p) =>
+          p.id === quickEditProfile.id
+            ? { ...p, ...quickForm, age: parseInt(quickForm.age) || p.age }
+            : p
+        )
+      );
+      setQuickEditProfile(null);
+    } catch (err: any) {
+      toast.error("Erro ao salvar: " + err.message);
+    }
+    setQuickEditSaving(false);
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -342,6 +392,9 @@ const AdminPage = () => {
                             <SelectItem value="yearly">Anual</SelectItem>
                           </SelectContent>
                         </Select>
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 border-primary text-primary hover:bg-primary/10" onClick={() => openQuickEdit(profile)}>
+                          <Pencil className="h-3.5 w-3.5" /> Rápido
+                        </Button>
                         <Link to={`/meu-perfil?adminProfileId=${profile.id}`} target="_blank">
                           <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8">
                             <Pencil className="h-3.5 w-3.5" /> Editar
@@ -425,6 +478,60 @@ const AdminPage = () => {
           </Card>
         </div>
       </main>
+
+      {/* Modal edição rápida */}
+      <Dialog open={!!quickEditProfile} onOpenChange={(open) => { if (!open) setQuickEditProfile(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edição Rápida — {quickEditProfile?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            {quickForm.image && (
+              <div className="flex justify-center">
+                <img src={quickForm.image} alt="foto" className="w-24 h-24 rounded-full object-cover border border-border" />
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">Nome</p>
+                <Input value={quickForm.name} onChange={(e) => setQuickForm((f) => ({ ...f, name: e.target.value }))} placeholder="Nome da modelo" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">Idade</p>
+                <Input type="number" value={quickForm.age} onChange={(e) => setQuickForm((f) => ({ ...f, age: e.target.value }))} placeholder="Idade" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">Telefone / WhatsApp</p>
+                <Input value={quickForm.phone} onChange={(e) => setQuickForm((f) => ({ ...f, phone: e.target.value }))} placeholder="(XX) XXXXX-XXXX" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">Cidade</p>
+                <Input value={quickForm.city} onChange={(e) => setQuickForm((f) => ({ ...f, city: e.target.value }))} placeholder="Cidade" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">Estado</p>
+                <Input value={quickForm.state} onChange={(e) => setQuickForm((f) => ({ ...f, state: e.target.value }))} placeholder="SP" maxLength={2} />
+              </div>
+              <div className="col-span-2 space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">URL da foto de perfil</p>
+                <Input value={quickForm.image} onChange={(e) => setQuickForm((f) => ({ ...f, image: e.target.value }))} placeholder="https://..." />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button className="flex-1" onClick={handleQuickSave} disabled={quickEditSaving}>
+                {quickEditSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+              </Button>
+              {(quickEditProfile?.status ?? "pending") === "pending" && (
+                <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={async () => { await handleQuickSave(); handleChangeStatus(quickEditProfile.id, "approved"); }} disabled={quickEditSaving}>
+                  Salvar e Aprovar
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => setQuickEditProfile(null)}>Cancelar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );

@@ -29,6 +29,7 @@ const SearchPage = () => {
   const { data: allProfiles = [], isLoading } = useQuery({
     queryKey: ["profiles"],
     queryFn: fetchProfiles,
+    staleTime: 1000 * 60 * 5, // cache por 5 minutos
   });
 
   const PLAN_RANK: Record<string, number> = { yearly: 0, monthly: 1, free: 2 };

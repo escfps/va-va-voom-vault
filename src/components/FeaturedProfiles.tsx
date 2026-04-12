@@ -4,10 +4,13 @@ import { fetchProfiles } from "@/lib/profiles";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const FeaturedProfiles = () => {
-  const { data: profiles = [], isLoading } = useQuery({
+  const { data: allProfiles = [], isLoading } = useQuery({
     queryKey: ["profiles"],
     queryFn: fetchProfiles,
+    staleTime: 1000 * 60 * 5, // cache por 5 minutos
   });
+
+  const profiles = allProfiles.slice(0, 12); // mostra só 12 na home
 
   return (
     <section className="py-16 bg-muted/50">
