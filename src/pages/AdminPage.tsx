@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Trash2, Loader2, Search, User, Heart, ShoppingBag, ExternalLink, Shield, Users, CheckCircle, Crown } from "lucide-react";
+import { Trash2, Loader2, Search, User, Heart, ShoppingBag, ExternalLink, Shield, Users, CheckCircle, Crown, Pencil, Clock, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { updatePlan } from "@/lib/updatePlan";
 
 // ─── Configure o e-mail do administrador aqui ───────────────────────────────
 const ADMIN_EMAILS = ["bruno13@hotmail.com"];
@@ -41,7 +42,9 @@ const AdminPage = () => {
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [updatingPlanId, setUpdatingPlanId] = useState<string | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<"all" | "acompanhante" | "conteudo">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email ?? "");
 
@@ -74,6 +77,10 @@ const AdminPage = () => {
       list = list.filter((p) => (p.tags ?? []).includes(filterType));
     }
 
+    if (filterStatus !== "all") {
+      list = list.filter((p) => (p.status ?? "pending") === filterStatus);
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -85,39 +92,42 @@ const AdminPage = () => {
     }
 
     setFiltered(list);
-  }, [search, filterType, profiles]);
+  }, [search, filterType, filterStatus, profiles]);
+
+  const handleChangeStatus = async (id: string, status: "approved" | "rejected") => {
+    setUpdatingStatusId(id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-plan`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ profileId: id, status }),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok || result.error) throw new Error(result.error ?? "Erro desconhecido");
+      toast.success(status === "approved" ? "Perfil aprovado!" : "Perfil reprovado.");
+      setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, status } : p));
+    } catch (err: any) {
+      toast.error("Erro ao atualizar status: " + err.message);
+    }
+    setUpdatingStatusId(null);
+  };
 
   const handleChangePlan = async (id: string, plan: string) => {
     setUpdatingPlanId(id);
-    const expiresAt = plan === "free"
-      ? null
-      : new Date(Date.now() + (plan === "yearly" ? 365 : 30) * 24 * 60 * 60 * 1000).toISOString();
-
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token ?? supabaseKey;
-
-    const body: Record<string, string | null> = { plan };
-    if (expiresAt !== null) body.plan_expires_at = expiresAt;
-
-    const res = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": supabaseKey,
-        "Authorization": `Bearer ${token}`,
-        "Prefer": "return=minimal",
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) {
-      const msg = await res.text();
-      toast.error("Erro ao atualizar plano: " + msg);
-    } else {
+    try {
+      await updatePlan(id, plan);
       toast.success(`Plano atualizado para ${plan === "yearly" ? "Anual" : plan === "monthly" ? "Mensal" : "Gratuito"}`);
       setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, plan } : p));
+    } catch (err: any) {
+      toast.error("Erro ao atualizar plano: " + err.message);
     }
     setUpdatingPlanId(null);
   };
@@ -207,7 +217,7 @@ const AdminPage = () => {
                     className="pl-9"
                   />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {(["all", "acompanhante", "conteudo"] as const).map((t) => (
                     <button
                       key={t}
@@ -219,6 +229,23 @@ const AdminPage = () => {
                       }`}
                     >
                       {t === "all" ? "Todos" : t === "acompanhante" ? "Acompanhante" : "Criadora"}
+                    </button>
+                  ))}
+                  <div className="w-px bg-border" />
+                  {(["all", "pending", "approved", "rejected"] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setFilterStatus(s)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        filterStatus === s
+                          ? s === "pending" ? "bg-yellow-500 text-white"
+                          : s === "approved" ? "bg-green-600 text-white"
+                          : s === "rejected" ? "bg-destructive text-white"
+                          : "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      {s === "all" ? "Todos status" : s === "pending" ? `⏳ Pendentes (${profiles.filter(p => (p.status ?? "pending") === "pending").length})` : s === "approved" ? "✅ Aprovados" : "❌ Reprovados"}
                     </button>
                   ))}
                 </div>
@@ -259,6 +286,15 @@ const AdminPage = () => {
                           <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
                             {profile.plan === "monthly" ? "Mensal" : profile.plan === "yearly" ? "Anual" : "Gratuito"}
                           </span>
+                          {(profile.status ?? "pending") === "pending" && (
+                            <span className="text-[10px] bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 px-1.5 py-0.5 rounded-full font-medium">⏳ Pendente</span>
+                          )}
+                          {profile.status === "approved" && (
+                            <span className="text-[10px] bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-1.5 py-0.5 rounded-full font-medium">✅ Aprovado</span>
+                          )}
+                          {profile.status === "rejected" && (
+                            <span className="text-[10px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 px-1.5 py-0.5 rounded-full font-medium">❌ Reprovado</span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -292,11 +328,60 @@ const AdminPage = () => {
                             <SelectItem value="yearly">Anual</SelectItem>
                           </SelectContent>
                         </Select>
+                        <Link to={`/meu-perfil?adminProfileId=${profile.id}`} target="_blank">
+                          <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8">
+                            <Pencil className="h-3.5 w-3.5" /> Editar
+                          </Button>
+                        </Link>
                         <Link to={`/perfil/${profile.id}`} target="_blank">
                           <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8">
                             <ExternalLink className="h-3.5 w-3.5" /> Ver
                           </Button>
                         </Link>
+                        {(profile.status ?? "pending") === "pending" && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="gap-1 text-xs h-8 bg-green-600 hover:bg-green-700"
+                              disabled={updatingStatusId === profile.id}
+                              onClick={() => handleChangeStatus(profile.id, "approved")}
+                            >
+                              {updatingStatusId === profile.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ThumbsUp className="h-3.5 w-3.5" />}
+                              Aprovar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="gap-1 text-xs h-8"
+                              disabled={updatingStatusId === profile.id}
+                              onClick={() => handleChangeStatus(profile.id, "rejected")}
+                            >
+                              <ThumbsDown className="h-3.5 w-3.5" /> Reprovar
+                            </Button>
+                          </>
+                        )}
+                        {profile.status === "approved" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1 text-xs h-8 text-yellow-600 border-yellow-500 hover:bg-yellow-50"
+                            disabled={updatingStatusId === profile.id}
+                            onClick={() => handleChangeStatus(profile.id, "rejected")}
+                          >
+                            <Clock className="h-3.5 w-3.5" /> Suspender
+                          </Button>
+                        )}
+                        {profile.status === "rejected" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1 text-xs h-8 text-green-600 border-green-500 hover:bg-green-50"
+                            disabled={updatingStatusId === profile.id}
+                            onClick={() => handleChangeStatus(profile.id, "approved")}
+                          >
+                            <ThumbsUp className="h-3.5 w-3.5" /> Reativar
+                          </Button>
+                        )}
                         <Button
                           variant="destructive"
                           size="sm"

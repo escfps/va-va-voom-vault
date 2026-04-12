@@ -18,6 +18,7 @@ import PlanosPage from "./pages/PlanosPage";
 import ContentDashboardPage from "./pages/ContentDashboardPage";
 import AdminPage from "./pages/AdminPage";
 import ContaPage from "./pages/ContaPage";
+import PagamentoConfirmadoPage from "./pages/PagamentoConfirmadoPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/painel-criadora" element={<ContentDashboardPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/conta" element={<ContaPage />} />
+            <Route path="/pagamento-confirmado" element={<PagamentoConfirmadoPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

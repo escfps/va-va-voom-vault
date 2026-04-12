@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { updatePlan } from "@/lib/updatePlan";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -22,9 +23,13 @@ import PaymentSection from "@/components/register/PaymentSection";
 
 const isVideoUrl = (url: string) => /\.(mp4|mov|webm|avi|mkv|m4v)(\?.*)?$/i.test(url);
 
+const ADMIN_EMAILS = ["bruno13@hotmail.com"];
+
 const EditProfilePage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const adminTargetProfileId = searchParams.get("adminProfileId");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const contentPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -33,6 +38,7 @@ const EditProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [profileStatus, setProfileStatus] = useState<string>("pending");
   const [profileTypes, setProfileTypes] = useState<string[]>(["acompanhante"]);
   const [activeTab, setActiveTab] = useState<string>("acompanhante");
   const [currentPlan, setCurrentPlan] = useState<string>("free");
@@ -83,17 +89,21 @@ const EditProfilePage = () => {
 
   useEffect(() => {
     if (!user) return;
+    const isAdmin = ADMIN_EMAILS.includes(user.email ?? "");
     const fetchProfile = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      let query = supabase.from("profiles").select("*");
+      if (adminTargetProfileId && isAdmin) {
+        query = query.eq("id", adminTargetProfileId);
+      } else {
+        query = query.eq("user_id", user.id);
+      }
+      const { data, error } = await query.maybeSingle();
 
       if (error) { console.error(error); toast.error("Erro ao carregar perfil"); setLoading(false); return; }
       if (!data) { setLoading(false); return; }
 
       setProfileId(data.id);
+      setProfileStatus(data.status ?? "pending");
       setExistingImages(data.images || []);
       setCurrentPlan(data.plan || "free");
       setPlanExpiresAt(data.plan_expires_at || null);
@@ -147,7 +157,7 @@ const EditProfilePage = () => {
       setLoading(false);
     };
     fetchProfile();
-  }, [user]);
+  }, [user, adminTargetProfileId]);
 
   const isPaidPlan = currentPlan === "monthly" || currentPlan === "yearly";
   const isYearlyPlan = currentPlan === "yearly";
@@ -373,23 +383,11 @@ const EditProfilePage = () => {
     if (!selectedNewPlan || !profileId || !user) return;
     setPlanSaving(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          plan: selectedNewPlan,
-          plan_expires_at: getPlanExpiresAt(selectedNewPlan),
-          verified: selectedNewPlan !== "free",
-        })
-        .eq("id", profileId)
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-
+      await updatePlan(profileId, selectedNewPlan);
       setCurrentPlan(selectedNewPlan);
       setPlanExpiresAt(getPlanExpiresAt(selectedNewPlan));
       setShowPlanChange(false);
       setSelectedNewPlan(null);
-
       const planName = selectedNewPlan === "free" ? "Gratuito" : selectedNewPlan === "monthly" ? "Mensal" : "Anual";
       toast.success(`Plano alterado para ${planName} com sucesso!`);
     } catch (err) {
@@ -487,6 +485,29 @@ const EditProfilePage = () => {
       <Navbar />
       <main className="flex-1 py-8">
         <div className="max-w-2xl mx-auto px-4">
+          {/* Banner de status */}
+          {profileStatus === "pending" && (
+            <div className="mb-4 p-4 rounded-xl border border-yellow-400/50 bg-yellow-50 dark:bg-yellow-900/20 flex items-start gap-3">
+              <span className="text-2xl">⏳</span>
+              <div>
+                <p className="font-semibold text-yellow-800 dark:text-yellow-300 text-sm">Perfil em análise</p>
+                <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">
+                  Seu perfil está aguardando aprovação da nossa equipe. Você pode editar seus dados enquanto aguarda. Assim que for aprovado, ele ficará visível no site.
+                </p>
+              </div>
+            </div>
+          )}
+          {profileStatus === "rejected" && (
+            <div className="mb-4 p-4 rounded-xl border border-destructive/50 bg-destructive/10 flex items-start gap-3">
+              <span className="text-2xl">❌</span>
+              <div>
+                <p className="font-semibold text-destructive text-sm">Perfil reprovado</p>
+                <p className="text-xs text-destructive/80 mt-0.5">
+                  Seu perfil foi reprovado. Entre em contato com o suporte para mais informações.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* ── Tab switcher (only when both types) ── */}
           {showTabs && (

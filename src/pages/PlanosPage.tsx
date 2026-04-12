@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Check, X, Star, Zap, Loader2, PartyPopper } from "lucide-react";
 
@@ -46,6 +48,7 @@ const PLANS = [
       "Destaque mensal",
       "Selo verificada",
       "Prioridade no ranking",
+      "Vídeo como foto de perfil e capa",
     ],
     missing: [],
   },
@@ -58,51 +61,83 @@ const PlanosPage = () => {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerTaxId, setCustomerTaxId] = useState("");
+
   const profileId = (location.state as { profileId?: string } | null)?.profileId;
 
-  const getPlanExpiresAt = (planId: string): string | null => {
-    if (planId === "free") return null;
-    const date = new Date();
-    if (planId === "monthly") date.setDate(date.getDate() + 30);
-    if (planId === "yearly") date.setFullYear(date.getFullYear() + 1);
-    return date.toISOString();
-  };
+  const isPaidPlan = selectedPlan && selectedPlan !== "free";
 
   const handleConfirm = async () => {
     if (!selectedPlan || !user) return;
 
+    if (isPaidPlan && (!customerName.trim() || !customerPhone.trim() || !customerTaxId.trim())) {
+      toast.error("Preencha nome, telefone e CPF para continuar.");
+      return;
+    }
+
     setLoading(true);
     try {
-      if (profileId) {
-        const { error } = await supabase
-          .from("profiles")
-          .update({
-            plan: selectedPlan,
-            plan_expires_at: getPlanExpiresAt(selectedPlan),
-            verified: selectedPlan !== "free",
-          })
-          .eq("id", profileId)
-          .eq("user_id", user.id);
-
-        if (error) {
-          // Coluna ainda não existe no banco — navega mesmo assim,
-          // o perfil já foi criado com sucesso
-          console.warn("Plan update skipped (column may not exist yet):", error.message);
-        }
-      }
-
       if (selectedPlan === "free") {
-        toast.success("Perfil publicado! Edite e complete seus dados abaixo.");
-      } else {
-        const planName = selectedPlan === "monthly" ? "Mensal" : "Anual";
-        toast.success(`Plano ${planName} ativado! Edite seu perfil abaixo.`);
+        if (profileId) {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+          const { data: { session } } = await supabase.auth.getSession();
+          const token = session?.access_token ?? supabaseKey;
+          await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${profileId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": supabaseKey,
+              "Authorization": `Bearer ${token}`,
+              "Prefer": "return=minimal",
+            },
+            body: JSON.stringify({ plan: "free", plan_expires_at: null, verified: false }),
+          });
+        }
+        toast.success("Perfil enviado para análise! Você será notificada quando for aprovado.");
+        navigate("/meu-perfil");
+        return;
       }
-      navigate("/meu-perfil");
+
+      // Plano pago → chama Edge Function para criar cobrança no AbacatePay
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-billing`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            planId: selectedPlan,
+            profileId,
+            customerName: customerName.trim(),
+            customerPhone: customerPhone.replace(/\D/g, ""),
+            customerTaxId: customerTaxId.replace(/\D/g, ""),
+          }),
+        }
+      );
+
+      const result = await res.json();
+
+      if (!res.ok || result.error) {
+        toast.error("Erro ao iniciar pagamento: " + (result.error ?? "Tente novamente."));
+        setLoading(false);
+        return;
+      }
+
+      // Redireciona para a página de pagamento do AbacatePay
+      window.location.href = result.url;
     } catch (err: any) {
       console.error("Unexpected error:", err);
       toast.error(`Erro inesperado: ${err?.message ?? err}`);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -110,7 +145,7 @@ const PlanosPage = () => {
       <Navbar />
       <main className="flex-1 py-10">
         <div className="max-w-2xl mx-auto px-4">
-          {/* Cabeçalho de sucesso */}
+          {/* Cabeçalho */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -167,12 +202,12 @@ const PlanosPage = () => {
                   )}
                 </div>
                 <ul className="space-y-1.5">
-                  {plan.features.map((f) => (
+                  {plan.features.map((f: string) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-foreground">
                       <Check className="h-3.5 w-3.5 text-green-500 shrink-0" /> {f}
                     </li>
                   ))}
-                  {plan.missing.map((f) => (
+                  {plan.missing.map((f: string) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground/60 line-through">
                       <X className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" /> {f}
                     </li>
@@ -182,17 +217,56 @@ const PlanosPage = () => {
             ))}
           </div>
 
+          {/* Dados para pagamento (só planos pagos) */}
+          {isPaidPlan && (
+            <div className="mt-6 space-y-3 p-4 rounded-xl border border-border bg-muted/30">
+              <p className="text-sm font-medium text-foreground">Dados para pagamento</p>
+              <div className="space-y-2">
+                <div>
+                  <Label htmlFor="customerName" className="text-xs">Nome completo</Label>
+                  <Input
+                    id="customerName"
+                    placeholder="Seu nome completo"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customerPhone" className="text-xs">Telefone (WhatsApp)</Label>
+                  <Input
+                    id="customerPhone"
+                    placeholder="(11) 99999-9999"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customerTaxId" className="text-xs">CPF</Label>
+                  <Input
+                    id="customerTaxId"
+                    placeholder="000.000.000-00"
+                    value={customerTaxId}
+                    onChange={(e) => setCustomerTaxId(e.target.value)}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Você será redirecionado para a página de pagamento segura (PIX ou cartão).
+              </p>
+            </div>
+          )}
+
           <Button
             onClick={handleConfirm}
             className="w-full mt-6 gap-2"
             disabled={!selectedPlan || loading}
           >
             {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Confirmando...
-              </>
+              <><Loader2 className="h-4 w-4 animate-spin" /> Aguarde...</>
+            ) : isPaidPlan ? (
+              "Ir para pagamento"
             ) : (
-              "Confirmar plano e acessar plataforma"
+              "Confirmar plano gratuito"
             )}
           </Button>
 

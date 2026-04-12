@@ -64,6 +64,7 @@ export type Database = {
           height: string | null
           id: string
           is_active: boolean
+          status: string
           image: string | null
           images: string[] | null
           languages: string[] | null
@@ -125,6 +126,7 @@ export type Database = {
           height?: string | null
           id?: string
           is_active?: boolean
+          status?: string
           image?: string | null
           images?: string[] | null
           languages?: string[] | null
@@ -186,6 +188,7 @@ export type Database = {
           height?: string | null
           id?: string
           is_active?: boolean
+          status?: string
           image?: string | null
           images?: string[] | null
           languages?: string[] | null

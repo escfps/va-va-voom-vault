@@ -72,6 +72,7 @@ export interface Profile {
   profileTypes?: string[];
   userId?: string;
   isActive: boolean;
+  status: string;
 }
 
 const allServices: ServiceItem[] = [

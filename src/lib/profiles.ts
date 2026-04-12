@@ -67,13 +67,15 @@ function mapDbToProfile(row: any): Profile {
       : ["acompanhante"],
     userId: row.user_id ?? undefined,
     isActive: row.is_active ?? true,
+    status: row.status ?? "pending",
   };
 }
 
 export async function fetchProfiles(): Promise<Profile[]> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("*");
+    .select("*")
+    .eq("status", "approved");
 
   if (error) {
     console.error("Error fetching profiles:", error);
@@ -104,7 +106,8 @@ export async function fetchProfilesByCity(city: string, excludeId?: string): Pro
   let query = supabase
     .from("profiles")
     .select("*")
-    .eq("city", city);
+    .eq("city", city)
+    .eq("status", "approved");
 
   if (excludeId) {
     query = query.neq("id", excludeId);

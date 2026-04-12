@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { updatePlan } from "@/lib/updatePlan";
 import { toast } from "sonner";
 import logoImg from "@/assets/logo.png";
 
@@ -129,19 +130,8 @@ const Navbar = () => {
     if (!selectedNewPlan || !planInfo?.profileId || !user) return;
     setPlanSaving(true);
     try {
+      await updatePlan(planInfo.profileId, selectedNewPlan);
       const expiresAt = getPlanExpiresAt(selectedNewPlan);
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          plan: selectedNewPlan,
-          plan_expires_at: expiresAt,
-          verified: selectedNewPlan !== "free",
-        } as any)
-        .eq("id", planInfo.profileId)
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-
       setPlanInfo({ ...planInfo, plan: selectedNewPlan, expiresAt });
       setSelectedNewPlan(null);
       setPlanPopoverOpen(false);
