@@ -53,12 +53,13 @@ serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, message: "Já creditado" }), { status: 200, headers: corsHeaders });
     }
 
-    // Registra a transação
+    // Registra a transação como paga e atualiza o saldo
     await supabase.from("referral_transactions").insert({
       referrer_id: referrer.id,
       referred_id: profileId,
       amount: REFERRAL_AMOUNT,
-      status: "pending",
+      status: "paid",
+      paid_at: new Date().toISOString(),
     });
 
     // Atualiza o saldo da indicadora

@@ -232,20 +232,35 @@ const Navbar = () => {
                         </p>
                       )}
 
-                      {/* Link */}
+                      {/* Código + Link */}
                       <div className="space-y-1.5">
-                        <p className="text-xs font-medium text-foreground">Seu link de indicação</p>
+                        <p className="text-xs font-medium text-foreground">Seu código de indicação</p>
                         {referralCode ? (
-                          <div className="flex items-center gap-2">
-                            <p className="flex-1 text-xs text-muted-foreground bg-muted rounded-lg px-2 py-1.5 font-mono truncate">
-                              xmodelprive.com/cadastro?ref={referralCode}
-                            </p>
-                            <button
-                              onClick={() => { navigator.clipboard.writeText(`https://xmodelprive.com/cadastro?ref=${referralCode}`); toast.success("Link copiado!"); }}
-                              className="shrink-0 p-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </button>
+                          <div className="flex flex-col gap-1.5">
+                            {/* Código */}
+                            <div className="flex items-center gap-2">
+                              <p className="flex-1 text-sm font-bold text-primary bg-primary/10 rounded-lg px-3 py-1.5 font-mono tracking-widest text-center">
+                                {referralCode}
+                              </p>
+                              <button
+                                onClick={() => { navigator.clipboard.writeText(referralCode); toast.success("Código copiado!"); }}
+                                className="shrink-0 p-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                            {/* Link completo */}
+                            <div className="flex items-center gap-2">
+                              <p className="flex-1 text-xs text-muted-foreground bg-muted rounded-lg px-2 py-1.5 font-mono truncate">
+                                xmodelprive.com/cadastro?ref={referralCode}
+                              </p>
+                              <button
+                                onClick={() => { navigator.clipboard.writeText(`https://xmodelprive.com/cadastro?ref=${referralCode}`); toast.success("Link copiado!"); }}
+                                className="shrink-0 p-1.5 rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground transition-colors"
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <p className="text-xs text-muted-foreground">Código será gerado em breve.</p>

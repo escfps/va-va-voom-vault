@@ -45,10 +45,9 @@ const RegisterPage = () => {
   const urlTipo = searchParams.get("tipo");
 
   // Código de indicação via ?ref=CODIGO
-  // Salva no localStorage para não perder se a pessoa precisar fazer login/signup antes
   const refFromUrl = searchParams.get("ref");
   if (refFromUrl) localStorage.setItem("referral_ref", refFromUrl);
-  const refCode = refFromUrl || localStorage.getItem("referral_ref") || "";
+  const [refCode, setRefCode] = useState(refFromUrl || localStorage.getItem("referral_ref") || "");
 
   // Controle de perfil existente
   const [existingProfileId, setExistingProfileId] = useState<string | null>(null);
@@ -695,8 +694,9 @@ const RegisterPage = () => {
                           id="refCodeInput"
                           value={refCode}
                           onChange={(e) => {
-                            const val = e.target.value.toUpperCase().trim();
-                            localStorage.setItem("referral_ref", val);
+                            const code = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+                            setRefCode(code);
+                            localStorage.setItem("referral_ref", code);
                           }}
                           placeholder="Ex: AB12CD"
                           maxLength={10}
