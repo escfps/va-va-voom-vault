@@ -21,6 +21,7 @@ import EditProfilePage from "./pages/EditProfilePage";
 import PlanosPage from "./pages/PlanosPage";
 import ContentDashboardPage from "./pages/ContentDashboardPage";
 import AdminPage from "./pages/AdminPage";
+import RankingPage from "./pages/RankingPage";
 import ContaPage from "./pages/ContaPage";
 import PagamentoConfirmadoPage from "./pages/PagamentoConfirmadoPage";
 import NotFound from "./pages/NotFound";
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/meu-perfil" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
             <Route path="/planos" element={<ProtectedRoute><PlanosPage /></ProtectedRoute>} />
             <Route path="/painel-criadora" element={FEATURES.CRIADORA_CONTEUDO ? <ProtectedRoute><ContentDashboardPage /></ProtectedRoute> : <Navigate to="/" replace />} />
+            <Route path="/ranking" element={<RankingPage />} />
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
             <Route path="/conta" element={<ProtectedRoute><ContaPage /></ProtectedRoute>} />
             <Route path="/pagamento-confirmado" element={<ProtectedRoute><PagamentoConfirmadoPage /></ProtectedRoute>} />

@@ -187,6 +187,9 @@ const Navbar = () => {
 
             {/* Desktop nav */}
             <div className="hidden md:flex items-center gap-4">
+              <Link to="/ranking" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                🏆 Ranking
+              </Link>
               {/* ── Logged in + HAS profile ── */}
               {user && planInfo?.profileId && (
                 <>
@@ -608,6 +611,9 @@ const Navbar = () => {
                   </Link>
                 </>
               )}
+              <Link to="/ranking" onClick={() => setIsOpen(false)} className="flex items-center gap-2 py-2 text-sm font-semibold">
+                🏆 Ranking
+              </Link>
             </div>
           )}
         </div>

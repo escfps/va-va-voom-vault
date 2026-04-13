@@ -12,8 +12,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { Trash2, Loader2, Search, User, Heart, ShoppingBag, ExternalLink, Shield, Users, CheckCircle, Crown, Pencil, Clock, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { updatePlan } from "@/lib/updatePlan";
 import { FEATURES } from "@/lib/features";
+import { getNivel } from "@/lib/nivel";
+
+const NIVEL_PRESETS: { label: string; views: number; referrals: number }[] = [
+  { label: "Ferro",      views: 0,     referrals: 0   },
+  { label: "Bronze",     views: 300,   referrals: 2   },
+  { label: "Prata",      views: 1000,  referrals: 5   },
+  { label: "Ouro",       views: 3000,  referrals: 15  },
+  { label: "Platina",    views: 7000,  referrals: 30  },
+  { label: "Diamante",   views: 15000, referrals: 60  },
+  { label: "Esmeralda",  views: 30000, referrals: 100 },
+  { label: "X",          views: 50000, referrals: 200 },
+];
 
 // ─── Configure o e-mail do administrador aqui ───────────────────────────────
 const ADMIN_EMAILS = ["bruno13@hotmail.com", "texasgramado@gmail.com"];
@@ -146,6 +159,16 @@ const AdminPage = () => {
       toast.error("Erro ao ativar bônus: " + err.message);
     }
     setUpdatingPlanId(null);
+  };
+
+  const handleSetNivelPreset = async (id: string, views: number, referrals: number) => {
+    try {
+      await (supabase.from("profiles").update({ view_count: views, referral_count: referrals } as any).eq("id", id));
+      setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, view_count: views, referral_count: referrals } : p));
+      toast.success(`Nível atualizado: ${views.toLocaleString("pt-BR")} views, ${referrals} indicações`);
+    } catch (err: any) {
+      toast.error("Erro ao atualizar nível: " + err.message);
+    }
   };
 
   const handleChangePlan = async (id: string, plan: string) => {
@@ -424,6 +447,41 @@ const AdminPage = () => {
                         <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 border-primary text-primary hover:bg-primary/10" onClick={() => openQuickEdit(profile)}>
                           <Pencil className="h-3.5 w-3.5" /> Rápido
                         </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8">
+                              🏅 Nível
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            {NIVEL_PRESETS.map((preset) => {
+                              const info = getNivel(preset.views, preset.referrals);
+                              const isDark = ["prata", "platina", "diamante"].includes(info.tier);
+                              return (
+                                <DropdownMenuItem
+                                  key={preset.label}
+                                  onClick={() => handleSetNivelPreset(profile.id, preset.views, preset.referrals)}
+                                  className="gap-2 cursor-pointer"
+                                >
+                                  <span
+                                    className="px-2 py-0.5 rounded-full text-xs font-bold"
+                                    style={{
+                                      background: info.tier === "x"
+                                        ? "linear-gradient(135deg, #0a0a0a, #7c3aed, #a855f7)"
+                                        : info.tier === "ferro" ? "#555" : info.color,
+                                      color: isDark ? "#0a0a0a" : "#fff",
+                                    }}
+                                  >
+                                    {preset.label}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {preset.views.toLocaleString("pt-BR")} views · {preset.referrals} ind.
+                                  </span>
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <Link to={`/meu-perfil?adminProfileId=${profile.id}`} target="_blank">
                           <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8">
                             <Pencil className="h-3.5 w-3.5" /> Editar
@@ -546,6 +604,35 @@ const AdminPage = () => {
                 <Input value={quickForm.image} onChange={(e) => setQuickForm((f) => ({ ...f, image: e.target.value }))} placeholder="https://..." />
               </div>
             </div>
+            {/* Testar nível */}
+            <div className="space-y-1.5 border-t border-border pt-3">
+              <p className="text-xs text-muted-foreground font-medium">Testar Nível (borda)</p>
+              <div className="flex flex-wrap gap-1.5">
+                {NIVEL_PRESETS.map((preset) => {
+                  const info = getNivel(preset.views, preset.referrals);
+                  const isDark = ["prata", "platina", "diamante"].includes(info.tier);
+                  return (
+                    <button
+                      key={preset.label}
+                      onClick={() => handleSetNivelPreset(quickEditProfile!.id, preset.views, preset.referrals)}
+                      className="px-2.5 py-1 rounded-full text-xs font-bold border-0 transition-opacity hover:opacity-80"
+                      style={{
+                        background: info.tier === "x"
+                          ? "linear-gradient(135deg, #0a0a0a, #7c3aed, #a855f7)"
+                          : info.tier === "ferro"
+                          ? "#444"
+                          : info.color,
+                        color: isDark ? "#0a0a0a" : "#fff",
+                        boxShadow: `0 2px 6px ${info.glowColor}`,
+                      }}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex gap-2 pt-1">
               <Button className="flex-1" onClick={handleQuickSave} disabled={quickEditSaving}>
                 {quickEditSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}

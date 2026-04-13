@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Watermark from "@/components/Watermark";
+import NivelCard from "@/components/NivelCard";
+import { getNivel } from "@/lib/nivel";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchProfileById, fetchProfiles } from "@/lib/profiles";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, MapPin, Star, CheckCircle, MessageCircle, Heart, Flag,
-  Home, Users, Clock, Camera,
+  Home, Users, Clock, Camera, Eye,
   User, MessageSquare, ChevronDown, ChevronUp, ShieldCheck, Video,
   DollarSign, Banknote, CreditCard, Smartphone, Pencil, Send, Loader2,
 } from "lucide-react";
@@ -32,6 +34,14 @@ const ProfileDetail = () => {
     queryFn: () => fetchProfileById(id!),
     enabled: !!id,
   });
+
+  // Incrementa visualização e atualiza o cache com o novo valor
+  useEffect(() => {
+    if (!id) return;
+    (supabase.rpc as any)("increment_view_count", { profile_id: id }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ["profile", id] });
+    });
+  }, [id]);
   const { data: allProfiles = [] } = useQuery({
     queryKey: ["profiles"],
     queryFn: fetchProfiles,
@@ -202,13 +212,29 @@ const ProfileDetail = () => {
         {/* Profile Header */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-10">
           <div className="flex flex-col md:flex-row gap-6 items-start">
-            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-background overflow-hidden shadow-xl flex-shrink-0">
-              {isVideoUrl(profile.image) ? (
-                <video src={profile.image} className="w-full h-full object-cover" autoPlay muted loop playsInline />
-              ) : (
-                <img src={profile.image} alt={profile.name} className="w-full h-full object-cover" />
-              )}
-            </div>
+            {(() => {
+              const elo = getNivel((profile as any).viewCount ?? 0, (profile as any).referralCount ?? 0);
+              return (
+                <>
+                  <style>{elo.keyframes}</style>
+                  <div
+                    className="w-28 h-28 md:w-36 md:h-36 rounded-full p-[3px] flex-shrink-0"
+                    style={{
+                      background: elo.borderGradient,
+                      animation: `${elo.animationName} 2.5s ease-in-out infinite`,
+                    }}
+                  >
+                    <div className="w-full h-full rounded-full overflow-hidden border-2 border-background">
+                      {isVideoUrl(profile.image) ? (
+                        <video src={profile.image} className="w-full h-full object-cover" autoPlay muted loop playsInline />
+                      ) : (
+                        <img src={profile.image} alt={profile.name} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
             <div className="flex-1 pt-2">
               <p className="text-sm text-muted-foreground mb-1">{profile.tagline}</p>
               <div className="flex items-center gap-3 flex-wrap">
@@ -226,12 +252,22 @@ const ProfileDetail = () => {
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   {profile.rating.toFixed(1)}
                 </span>
+                {(profile as any).viewCount != null && (
+                  <>
+                    <span>·</span>
+                    <span className="flex items-center gap-1">
+                      <Eye className="h-4 w-4" />
+                      {((profile as any).viewCount as number).toLocaleString("pt-BR")} visualizações
+                    </span>
+                  </>
+                )}
               </div>
               {profile.verified && profile.verifiedDate && (
                 <p className="text-xs text-primary mt-2 flex items-center gap-1">
                   <CheckCircle className="h-3 w-3" /> Verificada em {profile.verifiedDate}
                 </p>
               )}
+              <NivelCard viewCount={(profile as any).viewCount ?? 0} referralCount={(profile as any).referralCount ?? 0} />
             </div>
           </div>
 

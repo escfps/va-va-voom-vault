@@ -1,10 +1,27 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Profile, ServiceItem, PriceItem, Review } from "@/data/mockProfiles";
 
-const PLAN_RANK: Record<string, number> = { yearly: 0, monthly: 1, free: 2 };
+// Ordenação: anual > mensal > bônus 7 dias > X > esmeralda > diamante > platina > ouro > prata > bronze > ferro
+const NIVEL_RANK: Record<string, number> = {
+  x: 3, esmeralda: 4, diamante: 5, platina: 6, ouro: 7, prata: 8, bronze: 9, ferro: 10,
+};
 
-function planRank(plan: string | null | undefined): number {
-  return PLAN_RANK[plan ?? "free"] ?? 2;
+function getNivelTier(viewCount: number, referralCount: number): string {
+  if (viewCount >= 50000 && referralCount >= 200) return "x";
+  if (viewCount >= 30000 && referralCount >= 100) return "esmeralda";
+  if (viewCount >= 15000 && referralCount >= 60)  return "diamante";
+  if (viewCount >= 7000  && referralCount >= 30)  return "platina";
+  if (viewCount >= 3000  && referralCount >= 15)  return "ouro";
+  if (viewCount >= 1000  && referralCount >= 5)   return "prata";
+  if (viewCount >= 300   && referralCount >= 2)   return "bronze";
+  return "ferro";
+}
+
+function profileRank(p: any): number {
+  if (p.plan === "yearly") return 0;
+  if (p.plan === "monthly") return 1;
+  if (hasActiveBonus(p)) return 2;
+  return NIVEL_RANK[getNivelTier(p.viewCount ?? 0, p.referralCount ?? 0)] ?? 10;
 }
 
 function mapDbToProfile(row: any): Profile {
@@ -69,6 +86,8 @@ function mapDbToProfile(row: any): Profile {
     isActive: row.is_active ?? true,
     status: row.status ?? "pending",
     referralBonusUntil: row.referral_bonus_until ?? null,
+    viewCount: row.view_count ?? 0,
+    referralCount: row.referral_count ?? 0,
   };
 }
 
@@ -80,7 +99,7 @@ const LISTING_FIELDS = [
   "id", "name", "age", "city", "state", "tagline", "image", "images", "cover_image",
   "price", "price_duration", "plan", "verified", "verified_date",
   "rating", "review_count", "tags", "gender",
-  "is_active", "status", "user_id", "created_at",
+  "is_active", "status", "user_id", "created_at", "view_count", "referral_count",
 ].join(", ");
 
 export async function fetchProfiles(): Promise<Profile[]> {
@@ -110,14 +129,7 @@ export async function fetchProfiles(): Promise<Profile[]> {
 
   return (data ?? [])
     .map(mapDbToProfile)
-    .sort((a: any, b: any) => {
-      // Bonificadas aparecem logo após os planos pagos
-      const bonusA = hasActiveBonus(a) ? 0 : 1;
-      const bonusB = hasActiveBonus(b) ? 0 : 1;
-      const rankA = planRank(a.plan) * 10 + bonusA;
-      const rankB = planRank(b.plan) * 10 + bonusB;
-      return rankA - rankB;
-    });
+    .sort((a: any, b: any) => profileRank(a) - profileRank(b));
 }
 
 export async function fetchProfileById(id: string): Promise<Profile | null> {
@@ -155,6 +167,6 @@ export async function fetchProfilesByCity(city: string, excludeId?: string): Pro
 
   return (data ?? [])
     .map(mapDbToProfile)
-    .sort((a, b) => planRank(a.plan) - planRank(b.plan))
+    .sort((a, b) => profileRank(a) - profileRank(b))
     .slice(0, 3);
 }

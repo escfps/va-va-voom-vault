@@ -3,6 +3,7 @@ import { MapPin, Star, CheckCircle, Crown, Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import FavoriteButton from "@/components/FavoriteButton";
 import Watermark from "@/components/Watermark";
+import { getNivel } from "@/lib/nivel";
 
 interface ProfileCardProps {
   id: string;
@@ -16,6 +17,8 @@ interface ProfileCardProps {
   tags?: string[];
   plan?: string;
   referralBonusUntil?: string | null;
+  viewCount?: number;
+  referralCount?: number;
 }
 
 const ProfileCard = ({
@@ -30,14 +33,14 @@ const ProfileCard = ({
   tags = [],
   plan = "free",
   referralBonusUntil,
+  viewCount = 0,
+  referralCount = 0,
 }: ProfileCardProps) => {
   const isYearly = plan === "yearly";
   const isMonthly = plan === "monthly";
   const hasBonus = !!referralBonusUntil && new Date(referralBonusUntil) > new Date();
-
-  const wrapperClass = (isYearly || isMonthly || hasBonus)
-    ? "relative group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
-    : "group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 border border-border shadow-sm";
+  const nivel = getNivel(viewCount, referralCount);
+  const wrapperClass = "relative group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1";
 
   const card = (
     <Link to={`/perfil/${id}`} className={wrapperClass}>
@@ -57,12 +60,10 @@ const ProfileCard = ({
           />
         )}
 
-        {/* Overlay dourado animado no hover — só anual */}
         {isYearly && (
           <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/10 via-transparent to-yellow-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
         )}
 
-        {/* Watermark */}
         <Watermark className="absolute bottom-14 right-2 z-10" size="md" />
 
         <div className="absolute top-3 right-3 z-10">
@@ -101,6 +102,20 @@ const ProfileCard = ({
               DESTAQUE
             </Badge>
           )}
+          {nivel.tier !== "ferro" && (
+            <Badge
+              className="gap-1 text-xs font-bold tracking-wide border-0"
+              style={{
+                background: nivel.tier === "x"
+                  ? "linear-gradient(135deg, #0a0a0a, #7c3aed, #a855f7)"
+                  : nivel.color,
+                color: ["prata", "platina", "diamante"].includes(nivel.tier) ? "#0a0a0a" : nivel.tier === "x" ? "#fff" : "#0a0a0a",
+                boxShadow: `0 2px 8px ${nivel.glowColor}`,
+              }}
+            >
+              {nivel.label}
+            </Badge>
+          )}
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
@@ -137,9 +152,7 @@ const ProfileCard = ({
     </Link>
   );
 
-  if (!isYearly && !isMonthly && !hasBonus) return card;
-
-  // Configs de cada tipo de wrapper
+  // Config do wrapper animado — planos pagos têm prioridade, free usa nível
   const wrapperConfig = isYearly
     ? {
         background: "linear-gradient(135deg, #b8860b, #ffd700, #f0c040, #b8860b)",
@@ -158,13 +171,19 @@ const ProfileCard = ({
           50% { box-shadow: 0 0 36px rgba(239,68,68,1), 0 4px 48px rgba(239,68,68,0.6); }
         }`,
       }
-    : {
+    : hasBonus
+    ? {
         background: "linear-gradient(135deg, #e91e8c, #ff6ec7, #e91e8c)",
         animationName: "pinkPulse",
         keyframes: `@keyframes pinkPulse {
           0%, 100% { box-shadow: 0 0 14px rgba(233,30,140,0.5), 0 4px 24px rgba(233,30,140,0.2); }
           50% { box-shadow: 0 0 28px rgba(233,30,140,0.9), 0 4px 36px rgba(233,30,140,0.5); }
         }`,
+      }
+    : {
+        background: nivel.borderGradient,
+        animationName: nivel.animationName,
+        keyframes: nivel.keyframes,
       };
 
   return (
