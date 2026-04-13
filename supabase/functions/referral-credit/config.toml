@@ -1,0 +1,2 @@
+[functions.referral-credit]
+verify_jwt = false

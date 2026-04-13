@@ -183,9 +183,14 @@ const AdminPage = () => {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         if (supabaseUrl && supabaseKey) {
+          const { data: { session } } = await supabase.auth.getSession();
           fetch(`${supabaseUrl}/functions/v1/referral-credit`, {
             method: "POST",
-            headers: { "Content-Type": "application/json", "apikey": supabaseKey },
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": supabaseKey,
+              "Authorization": `Bearer ${session?.access_token}`,
+            },
             body: JSON.stringify({ profileId: id }),
           }).catch((err) => console.error("Erro ao creditar indicação:", err));
         }
