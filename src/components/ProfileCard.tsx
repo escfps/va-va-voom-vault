@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import FavoriteButton from "@/components/FavoriteButton";
 import Watermark from "@/components/Watermark";
 import { getNivel } from "@/lib/nivel";
+import { toProfileSlug } from "@/lib/profileSlug";
 
 interface ProfileCardProps {
   id: string;
@@ -19,7 +20,11 @@ interface ProfileCardProps {
   referralBonusUntil?: string | null;
   viewCount?: number;
   referralCount?: number;
+  viewRank?: number;
+  referralRank?: number;
 }
+
+const TROPHY_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
 
 const ProfileCard = ({
   id,
@@ -35,6 +40,8 @@ const ProfileCard = ({
   referralBonusUntil,
   viewCount = 0,
   referralCount = 0,
+  viewRank,
+  referralRank,
 }: ProfileCardProps) => {
   const isYearly = plan === "yearly";
   const isMonthly = plan === "monthly";
@@ -43,7 +50,7 @@ const ProfileCard = ({
   const wrapperClass = "relative group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1";
 
   const card = (
-    <Link to={`/perfil/${id}`} className={wrapperClass}>
+    <Link to={`/acompanhante/${toProfileSlug(name, id)}`} className={wrapperClass}>
       <div className="relative aspect-[3/4] overflow-hidden">
         {/\.(mp4|mov|webm|avi|mkv|m4v)(\?.*)?$/i.test(image) ? (
           <video
@@ -69,6 +76,19 @@ const ProfileCard = ({
         <div className="absolute top-3 right-3 z-10">
           <FavoriteButton profileId={id} />
         </div>
+
+        {(viewRank && viewRank <= 3) || (referralRank && referralRank <= 3) ? (() => {
+          const rank = viewRank && viewRank <= 3 ? viewRank : referralRank!;
+          const color = TROPHY_COLORS[rank - 1];
+          return (
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center" style={{ top: "-10px" }}>
+              <Crown
+                className="h-10 w-10 drop-shadow-xl"
+                style={{ color, filter: `drop-shadow(0 0 8px ${color})` }}
+              />
+            </div>
+          );
+        })() : null}
 
         <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
           {verified && (

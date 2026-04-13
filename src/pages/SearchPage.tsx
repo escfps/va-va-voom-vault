@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -10,10 +10,49 @@ import { Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSeo } from "@/lib/useSeo";
 
+function toSlug(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const cidadeParam = searchParams.get("cidade") || "";
   const [search, setSearch] = useState(cidadeParam);
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    const q = search.trim();
+    if (!q) return;
+
+    // Formato "Cidade - UF" → redireciona para URL limpa
+    const parts = q.split(" - ");
+    if (parts.length >= 2) {
+      const citySlug = toSlug(parts[0].trim());
+      const stateSlug = parts[1].trim().toLowerCase();
+      navigate(`/acompanhantes/${citySlug}-${stateSlug}`);
+      return;
+    }
+
+    // Busca livre — tenta encontrar match exato na lista de perfis para redirecionar
+    const match = allProfiles.find(
+      (p) => p.city.toLowerCase().includes(q.toLowerCase())
+    );
+    if (match) {
+      navigate(`/acompanhantes/${toSlug(match.city)}-${match.state.toLowerCase()}`);
+    }
+  };
+
+  const { data: allProfiles = [], isLoading } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: fetchProfiles,
+    staleTime: 1000 * 60 * 5,
+  });
 
   useSeo({
     title: cidadeParam ? `Acompanhantes em ${cidadeParam}` : "Buscar Acompanhantes",
@@ -24,12 +63,6 @@ const SearchPage = () => {
       ? `acompanhante ${cidadeParam}, acompanhantes em ${cidadeParam}, modelo ${cidadeParam}`
       : "buscar acompanhantes, acompanhantes por cidade, acompanhantes Brasil",
     canonical: cidadeParam ? `https://xmodelprive.com/busca?cidade=${cidadeParam}` : "https://xmodelprive.com/busca",
-  });
-
-  const { data: allProfiles = [], isLoading } = useQuery({
-    queryKey: ["profiles"],
-    queryFn: fetchProfiles,
-    staleTime: 1000 * 60 * 5, // cache por 5 minutos
   });
 
   const PLAN_RANK: Record<string, number> = { yearly: 0, monthly: 1, free: 2 };
@@ -59,6 +92,9 @@ const SearchPage = () => {
     );
   }).sort((a, b) => (PLAN_RANK[a.plan] ?? 2) - (PLAN_RANK[b.plan] ?? 2));
 
+  const topViewIds = [...allProfiles].filter(p => (p.viewCount ?? 0) > 0).sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0)).slice(0, 3).map(p => p.id);
+  const topReferralIds = [...allProfiles].filter(p => (p.referralCount ?? 0) > 0).sort((a, b) => (b.referralCount ?? 0) - (a.referralCount ?? 0)).slice(0, 3).map(p => p.id);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -73,6 +109,7 @@ const SearchPage = () => {
                 placeholder="Buscar por cidade, nome ou tag..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleSearch}
                 className="pr-10 h-12"
               />
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -88,7 +125,12 @@ const SearchPage = () => {
           ) : filtered.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {filtered.map((profile) => (
-                <ProfileCard key={profile.id} {...profile} />
+                <ProfileCard
+                  key={profile.id}
+                  {...profile}
+                  viewRank={topViewIds.indexOf(profile.id) !== -1 ? topViewIds.indexOf(profile.id) + 1 : undefined}
+                  referralRank={topReferralIds.indexOf(profile.id) !== -1 ? topReferralIds.indexOf(profile.id) + 1 : undefined}
+                />
               ))}
             </div>
           ) : (

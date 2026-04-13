@@ -24,6 +24,7 @@ import AdminPage from "./pages/AdminPage";
 import RankingPage from "./pages/RankingPage";
 import ContaPage from "./pages/ContaPage";
 import PagamentoConfirmadoPage from "./pages/PagamentoConfirmadoPage";
+import CityPage from "./pages/CityPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,7 +40,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/busca" element={<SearchPage />} />
+            <Route path="/acompanhantes/:slug" element={<CityPage />} />
             <Route path="/perfil/:id" element={<ProfileDetail />} />
+            <Route path="/acompanhante/:slug" element={<ProfileDetail />} />
             <Route path="/cadastro" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/cadastro-usuario" element={<SignupPage />} />

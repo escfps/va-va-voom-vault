@@ -10,7 +10,10 @@ const FeaturedProfiles = () => {
     staleTime: 1000 * 60 * 5, // cache por 5 minutos
   });
 
-  const profiles = allProfiles.slice(0, 12); // mostra só 12 na home
+  const profiles = allProfiles.slice(0, 12);
+
+  const topViewIds = [...allProfiles].filter(p => (p.viewCount ?? 0) > 0).sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0)).slice(0, 3).map(p => p.id);
+  const topReferralIds = [...allProfiles].filter(p => (p.referralCount ?? 0) > 0).sort((a, b) => (b.referralCount ?? 0) - (a.referralCount ?? 0)).slice(0, 3).map(p => p.id);
 
   return (
     <section className="py-16 bg-muted/50">
@@ -33,7 +36,13 @@ const FeaturedProfiles = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {profiles.map((profile) => (
-              <ProfileCard key={profile.id} {...profile} referralBonusUntil={(profile as any).referralBonusUntil} />
+              <ProfileCard
+                key={profile.id}
+                {...profile}
+                referralBonusUntil={(profile as any).referralBonusUntil}
+                viewRank={topViewIds.indexOf(profile.id) !== -1 ? topViewIds.indexOf(profile.id) + 1 : undefined}
+                referralRank={topReferralIds.indexOf(profile.id) !== -1 ? topReferralIds.indexOf(profile.id) + 1 : undefined}
+              />
             ))}
           </div>
         )}

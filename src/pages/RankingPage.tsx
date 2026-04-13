@@ -4,8 +4,9 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, Trophy, Crown, Star, Medal } from "lucide-react";
+import { Eye, Crown, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toProfileSlug } from "@/lib/profileSlug";
 
 type TopProfile = {
   id: string;
@@ -77,7 +78,7 @@ async function fetchTopReferrers(): Promise<TopReferrer[]> {
 }
 
 const medalColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
-const medalIcons = [Crown, Trophy, Medal];
+const medalIcons = [Crown, Crown, Crown];
 
 function PlanBadge({ plan }: { plan: string }) {
   if (plan === "yearly")
@@ -105,7 +106,7 @@ function RankRow({ position, image, name, city, plan, value, label, id }: {
 
   return (
     <Link
-      to={`/perfil/${id}`}
+      to={`/acompanhante/${toProfileSlug(name, id)}`}
       className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors"
     >
       <div className="w-8 text-center font-bold text-lg shrink-0" style={{ color }}>
@@ -172,7 +173,7 @@ export default function RankingPage() {
             onClick={() => setTab("referrals")}
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-colors ${tab === "referrals" ? "bg-primary text-primary-foreground" : "hover:bg-muted/50"}`}
           >
-            <Trophy className="h-4 w-4" />
+            <Crown className="h-4 w-4" />
             Top Indicadoras
           </button>
         </div>

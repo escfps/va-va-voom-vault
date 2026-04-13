@@ -21,28 +21,31 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useSeo } from "@/lib/useSeo";
+import { toProfileSlug, extractIdFromSlug } from "@/lib/profileSlug";
 
 const isVideoUrl = (url: string) => /\.(mp4|mov|webm|avi|mkv|m4v)(\?.*)?$/i.test(url);
 
 const ProfileDetail = () => {
-  const { id } = useParams();
+  const { id, slug } = useParams();
+  // Suporta /perfil/:id e /modelo/:slug
+  const profileId = slug ? extractIdFromSlug(slug) : id!;
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile", id],
-    queryFn: () => fetchProfileById(id!),
-    enabled: !!id,
+    queryKey: ["profile", profileId],
+    queryFn: () => fetchProfileById(profileId),
+    enabled: !!profileId,
   });
 
   // Incrementa visualização e atualiza o cache com o novo valor
   useEffect(() => {
-    if (!id) return;
-    (supabase.rpc as any)("increment_view_count", { profile_id: id }).then(() => {
-      queryClient.invalidateQueries({ queryKey: ["profile", id] });
+    if (!profileId) return;
+    (supabase.rpc as any)("increment_view_count", { profile_id: profile?.id ?? profileId }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ["profile", profileId] });
     });
-  }, [id]);
+  }, [profileId]);
   const { data: allProfiles = [] } = useQuery({
     queryKey: ["profiles"],
     queryFn: fetchProfiles,
@@ -50,16 +53,16 @@ const ProfileDetail = () => {
 
   // Reviews do banco
   const { data: dbReviews = [], isLoading: reviewsLoading } = useQuery({
-    queryKey: ["reviews", id],
+    queryKey: ["reviews", profileId],
     queryFn: async () => {
       const { data } = await supabase
         .from("reviews")
         .select("*")
-        .eq("profile_id", id!)
+        .eq("profile_id", profile?.id ?? profileId)
         .order("created_at", { ascending: false });
       return data ?? [];
     },
-    enabled: !!id,
+    enabled: !!profileId,
   });
 
   // Verifica se o usuário logado já avaliou
@@ -769,7 +772,7 @@ const ProfileDetail = () => {
                 {related.slice(0, 3).map((p) => (
                   <Link
                     key={p.id}
-                    to={`/perfil/${p.id}`}
+                    to={`/acompanhante/${toProfileSlug(p.name, p.id)}`}
                     className="flex bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
                   >
                     <img

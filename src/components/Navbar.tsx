@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { updatePlan } from "@/lib/updatePlan";
 import { toast } from "sonner";
 import logoImg from "@/assets/logo.png";
+import { toProfileSlug } from "@/lib/profileSlug";
 
 const PLANS = [
   {
@@ -74,7 +75,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { favoriteIds } = useFavorites();
-  const [planInfo, setPlanInfo] = useState<{ plan: string; expiresAt: string | null; profileId: string | null } | null>(null);
+  const [planInfo, setPlanInfo] = useState<{ plan: string; expiresAt: string | null; profileId: string | null; profileName: string | null } | null>(null);
   const [profileTypes, setProfileTypes] = useState<string[]>([]);
   const [referralCode, setReferralCode] = useState<string>("");
   const [referralBalance, setReferralBalance] = useState<number>(0);
@@ -89,7 +90,7 @@ const Navbar = () => {
       .maybeSingle()
       .then(({ data, error }) => {
         if (error || !data) {
-          setPlanInfo({ plan: "free", expiresAt: null, profileId: null });
+          setPlanInfo({ plan: "free", expiresAt: null, profileId: null, profileName: null });
           setProfileTypes([]);
           return;
         }
@@ -97,6 +98,7 @@ const Navbar = () => {
           plan: (data as any).plan || "free",
           expiresAt: (data as any).plan_expires_at || null,
           profileId: data.id,
+          profileName: (data as any).name || null,
         });
         setReferralCode((data as any).referral_code || "");
         setReferralBalance((data as any).referral_balance || 0);
@@ -388,7 +390,7 @@ const Navbar = () => {
                         </DropdownMenuItem>
                         {planInfo?.profileId && (
                           <DropdownMenuItem asChild>
-                            <Link to={`/perfil/${planInfo.profileId}`} className="flex items-center gap-2 cursor-pointer">
+                            <Link to={`/acompanhante/${toProfileSlug(planInfo.profileName ?? "", planInfo.profileId ?? "")}`} className="flex items-center gap-2 cursor-pointer">
                               <Heart className="h-4 w-4" /> Ver perfil
                             </Link>
                           </DropdownMenuItem>
@@ -428,7 +430,7 @@ const Navbar = () => {
                         </DropdownMenuItem>
                         {planInfo?.profileId && (
                           <DropdownMenuItem asChild>
-                            <Link to={`/perfil/${planInfo.profileId}`} className="flex items-center gap-2 cursor-pointer">
+                            <Link to={`/acompanhante/${toProfileSlug(planInfo.profileName ?? "", planInfo.profileId ?? "")}`} className="flex items-center gap-2 cursor-pointer">
                               <ShoppingBag className="h-4 w-4" /> Ver perfil
                             </Link>
                           </DropdownMenuItem>
@@ -553,7 +555,7 @@ const Navbar = () => {
                           </button>
                         </Link>
                         {planInfo?.profileId && (
-                          <Link to={`/perfil/${planInfo.profileId}`} onClick={() => setIsOpen(false)} className="flex-1">
+                          <Link to={`/acompanhante/${toProfileSlug(planInfo.profileName ?? "", planInfo.profileId ?? "")}`} onClick={() => setIsOpen(false)} className="flex-1">
                             <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-semibold transition-colors">
                               <Heart className="h-3.5 w-3.5" /> Ver perfil
                             </button>
@@ -590,7 +592,7 @@ const Navbar = () => {
                           </button>
                         </Link>
                         {planInfo?.profileId && (
-                          <Link to={`/perfil/${planInfo.profileId}`} onClick={() => setIsOpen(false)} className="flex-1">
+                          <Link to={`/acompanhante/${toProfileSlug(planInfo.profileName ?? "", planInfo.profileId ?? "")}`} onClick={() => setIsOpen(false)} className="flex-1">
                             <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 text-foreground text-xs font-semibold transition-colors">
                               <ShoppingBag className="h-3.5 w-3.5" /> Ver perfil
                             </button>

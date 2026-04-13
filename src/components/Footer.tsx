@@ -36,10 +36,12 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Cidades</h4>
             <ul className="space-y-2 text-sm opacity-70">
-              <li><Link to="/busca?cidade=São Paulo" className="hover:text-primary transition-colors">São Paulo</Link></li>
-              <li><Link to="/busca?cidade=Rio de Janeiro" className="hover:text-primary transition-colors">Rio de Janeiro</Link></li>
-              <li><Link to="/busca?cidade=Belo Horizonte" className="hover:text-primary transition-colors">Belo Horizonte</Link></li>
-              <li><Link to="/busca?cidade=Curitiba" className="hover:text-primary transition-colors">Curitiba</Link></li>
+              <li><Link to="/acompanhantes/sao-paulo-sp" className="hover:text-primary transition-colors">São Paulo</Link></li>
+              <li><Link to="/acompanhantes/rio-de-janeiro-rj" className="hover:text-primary transition-colors">Rio de Janeiro</Link></li>
+              <li><Link to="/acompanhantes/belo-horizonte-mg" className="hover:text-primary transition-colors">Belo Horizonte</Link></li>
+              <li><Link to="/acompanhantes/curitiba-pr" className="hover:text-primary transition-colors">Curitiba</Link></li>
+              <li><Link to="/acompanhantes/gramado-rs" className="hover:text-primary transition-colors">Gramado</Link></li>
+              <li><Link to="/acompanhantes/porto-alegre-rs" className="hover:text-primary transition-colors">Porto Alegre</Link></li>
             </ul>
           </div>
         </div>

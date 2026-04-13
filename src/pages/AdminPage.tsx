@@ -10,12 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, Loader2, Search, User, Heart, ShoppingBag, ExternalLink, Shield, Users, CheckCircle, Crown, Pencil, Clock, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Trash2, Loader2, Search, User, Heart, ShoppingBag, ExternalLink, Shield, Users, CheckCircle, Crown, Pencil, Clock, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { updatePlan } from "@/lib/updatePlan";
 import { FEATURES } from "@/lib/features";
 import { getNivel } from "@/lib/nivel";
+import { toProfileSlug } from "@/lib/profileSlug";
 
 const NIVEL_PRESETS: { label: string; views: number; referrals: number }[] = [
   { label: "Ferro",      views: 0,     referrals: 0   },
@@ -142,6 +143,16 @@ const AdminPage = () => {
       toast.error("Erro ao atualizar status: " + err.message);
     }
     setUpdatingStatusId(null);
+  };
+
+  const handleUpdateBalance = async (id: string, value: number) => {
+    try {
+      await (supabase.from("profiles").update({ referral_balance: value } as any).eq("id", id));
+      setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, referral_balance: value } : p));
+      toast.success("Saldo atualizado!");
+    } catch (err: any) {
+      toast.error("Erro ao atualizar saldo: " + err.message);
+    }
   };
 
   const handleActivateBonus = async (id: string) => {
@@ -421,6 +432,27 @@ const AdminPage = () => {
                           {profile.age && (
                             <span className="text-xs text-muted-foreground">· {profile.age} anos</span>
                           )}
+                          {profile.phone && (
+                            <a
+                              href={`https://wa.me/55${profile.phone.replace(/\D/g, "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-xs text-green-500 hover:text-green-400 transition-colors font-medium"
+                            >
+                              <MessageCircle className="h-3 w-3" /> {profile.phone}
+                            </a>
+                          )}
+                          <div className="flex items-center gap-1 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded-full text-xs font-medium">
+                            <span>💜 R$</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={(profile as any).referral_balance ?? 0}
+                              onChange={(e) => setProfiles((prev) => prev.map((p) => p.id === profile.id ? { ...p, referral_balance: Number(e.target.value) } : p))}
+                              onBlur={(e) => handleUpdateBalance(profile.id, Number(e.target.value))}
+                              className="w-12 bg-transparent text-purple-700 dark:text-purple-300 font-medium text-xs outline-none text-center"
+                            />
+                          </div>
                         </div>
                       </div>
 
@@ -492,7 +524,7 @@ const AdminPage = () => {
                             <Pencil className="h-3.5 w-3.5" /> Editar
                           </Button>
                         </Link>
-                        <Link to={`/perfil/${profile.id}`} target="_blank">
+                        <Link to={`/acompanhante/${toProfileSlug(profile.name, profile.id)}`} target="_blank">
                           <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8">
                             <ExternalLink className="h-3.5 w-3.5" /> Ver
                           </Button>

@@ -20,6 +20,7 @@ import {
 import ScheduleSection, { defaultSchedule, scheduleToDb, dbToSchedule } from "@/components/register/ScheduleSection";
 import ServicesSection, { defaultServices, servicesToDb, dbToServices } from "@/components/register/ServicesSection";
 import PaymentSection from "@/components/register/PaymentSection";
+import { toProfileSlug } from "@/lib/profileSlug";
 
 const isVideoUrl = (url: string) => /\.(mp4|mov|webm|avi|mkv|m4v)(\?.*)?$/i.test(url);
 
@@ -844,7 +845,7 @@ const EditProfilePage = () => {
                     <Button type="submit" className="w-full gap-2" disabled={saving}>
                       {saving ? (<><Loader2 className="h-4 w-4 animate-spin" /> Salvando...</>) : (<><Save className="h-4 w-4" /> Salvar alterações</>)}
                     </Button>
-                    <Button type="button" variant="outline" onClick={() => navigate(`/perfil/${profileId}`)}>Ver meu perfil</Button>
+                    <Button type="button" variant="outline" onClick={() => navigate(`/acompanhante/${toProfileSlug(form.name, profileId!)}`)}>Ver meu perfil</Button>
                     <Button type="button" variant="destructive" className="gap-2" onClick={handleDelete}>
                       <Trash2 className="h-4 w-4" /> Excluir perfil
                     </Button>

@@ -4,6 +4,25 @@ import { Search, MapPin, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+function toSlug(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
+function cityToPath(cityWithState: string): string {
+  // Formato "Rio de Janeiro - RJ" → /acompanhantes/rio-de-janeiro-rj
+  const parts = cityWithState.split(" - ");
+  if (parts.length >= 2) {
+    return `/acompanhantes/${toSlug(parts[0].trim())}-${parts[1].trim().toLowerCase()}`;
+  }
+  // Sem estado → só slug da cidade
+  return `/acompanhantes/${toSlug(cityWithState)}`;
+}
+
 const popularCities = [
   "São Paulo",
   "Rio de Janeiro",
@@ -73,7 +92,7 @@ const HeroSection = () => {
 
   const handleSearch = () => {
     if (search.trim()) {
-      navigate(`/busca?cidade=${encodeURIComponent(search)}`);
+      navigate(cityToPath(search.trim()));
       setShowSuggestions(false);
     }
   };
@@ -81,7 +100,7 @@ const HeroSection = () => {
   const handleSelectCity = (city) => {
     setSearch(city);
     setShowSuggestions(false);
-    navigate(`/busca?cidade=${encodeURIComponent(city)}`);
+    navigate(cityToPath(city));
   };
 
   return (
@@ -148,7 +167,7 @@ const HeroSection = () => {
                   {popularCities.map((city) => (
                     <button
                       key={city}
-                      onClick={() => navigate(`/busca?cidade=${encodeURIComponent(city)}`)}
+                      onClick={() => navigate(cityToPath(city))}
                       className="flex items-center justify-between w-full py-2.5 px-3 rounded-lg hover:bg-muted transition-colors group"
                     >
                       <span className="flex items-center gap-2 text-sm text-foreground">
