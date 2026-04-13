@@ -88,6 +88,7 @@ const FavoritesPage = () => {
                   rating={Number(profile.rating) || 0}
                   tags={profile.tags || []}
                   plan={(profile as any).plan || "free"}
+                  referralBonusUntil={(profile as any).referral_bonus_until ?? (profile as any).referralBonusUntil ?? null}
                 />
               ))}
             </div>

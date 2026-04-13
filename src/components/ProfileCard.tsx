@@ -35,12 +35,8 @@ const ProfileCard = ({
   const isMonthly = plan === "monthly";
   const hasBonus = !!referralBonusUntil && new Date(referralBonusUntil) > new Date();
 
-  const wrapperClass = isYearly
+  const wrapperClass = (isYearly || isMonthly || hasBonus)
     ? "relative group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
-    : isMonthly
-    ? "group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 border-[3px] border-red-500 shadow-[0_0_14px_rgba(239,68,68,0.5)]"
-    : hasBonus
-    ? "group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
     : "group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 border border-border shadow-sm";
 
   const card = (
@@ -141,45 +137,45 @@ const ProfileCard = ({
     </Link>
   );
 
-  if (!isYearly && !hasBonus) return card;
+  if (!isYearly && !isMonthly && !hasBonus) return card;
 
-  // Wrapper bônus rosa pulsante
-  if (hasBonus && !isYearly) {
-    return (
-      <div
-        className="relative rounded-xl p-[3px] group"
-        style={{
-          background: "linear-gradient(135deg, #e91e8c, #ff6ec7, #e91e8c)",
-          animation: "pinkPulse 2.5s ease-in-out infinite",
-        }}
-      >
-        <style>{`
-          @keyframes pinkPulse {
-            0%, 100% { box-shadow: 0 0 14px rgba(233,30,140,0.5), 0 4px 24px rgba(233,30,140,0.2); }
-            50% { box-shadow: 0 0 28px rgba(233,30,140,0.9), 0 4px 36px rgba(233,30,140,0.5); }
-          }
-        `}</style>
-        {card}
-      </div>
-    );
-  }
+  // Configs de cada tipo de wrapper
+  const wrapperConfig = isYearly
+    ? {
+        background: "linear-gradient(135deg, #b8860b, #ffd700, #f0c040, #b8860b)",
+        animationName: "goldPulse",
+        keyframes: `@keyframes goldPulse {
+          0%, 100% { box-shadow: 0 0 18px rgba(255,215,0,0.6), 0 4px 32px rgba(255,215,0,0.3); }
+          50% { box-shadow: 0 0 36px rgba(255,215,0,1), 0 4px 48px rgba(255,215,0,0.6); }
+        }`,
+      }
+    : isMonthly
+    ? {
+        background: "linear-gradient(135deg, #dc2626, #ef4444, #f87171, #dc2626)",
+        animationName: "redPulse",
+        keyframes: `@keyframes redPulse {
+          0%, 100% { box-shadow: 0 0 18px rgba(239,68,68,0.6), 0 4px 32px rgba(239,68,68,0.3); }
+          50% { box-shadow: 0 0 36px rgba(239,68,68,1), 0 4px 48px rgba(239,68,68,0.6); }
+        }`,
+      }
+    : {
+        background: "linear-gradient(135deg, #e91e8c, #ff6ec7, #e91e8c)",
+        animationName: "pinkPulse",
+        keyframes: `@keyframes pinkPulse {
+          0%, 100% { box-shadow: 0 0 14px rgba(233,30,140,0.5), 0 4px 24px rgba(233,30,140,0.2); }
+          50% { box-shadow: 0 0 28px rgba(233,30,140,0.9), 0 4px 36px rgba(233,30,140,0.5); }
+        }`,
+      };
 
-  // Wrapper com borda dourada animada — plano anual
   return (
     <div
       className="relative rounded-xl p-[3px] group"
       style={{
-        background: "linear-gradient(135deg, #b8860b, #ffd700, #f0c040, #b8860b)",
-        boxShadow: "0 0 18px rgba(255,215,0,0.55), 0 4px_32px rgba(255,215,0,0.25)",
-        animation: "goldPulse 2.5s ease-in-out infinite",
+        background: wrapperConfig.background,
+        animation: `${wrapperConfig.animationName} 2.5s ease-in-out infinite`,
       }}
     >
-      <style>{`
-        @keyframes goldPulse {
-          0%, 100% { box-shadow: 0 0 18px rgba(255,215,0,0.55), 0 4px 32px rgba(255,215,0,0.25); }
-          50% { box-shadow: 0 0 32px rgba(255,215,0,0.9), 0 4px 40px rgba(255,215,0,0.5); }
-        }
-      `}</style>
+      <style>{wrapperConfig.keyframes}</style>
       {card}
     </div>
   );

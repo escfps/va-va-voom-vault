@@ -73,6 +73,7 @@ export interface Profile {
   userId?: string;
   isActive: boolean;
   status: string;
+  referralBonusUntil?: string | null;
 }
 
 const allServices: ServiceItem[] = [

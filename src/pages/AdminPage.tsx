@@ -131,7 +131,25 @@ const AdminPage = () => {
     setUpdatingStatusId(null);
   };
 
+  const handleActivateBonus = async (id: string) => {
+    setUpdatingPlanId(id);
+    try {
+      const bonusUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase
+        .from("profiles")
+        .update({ referral_bonus_until: bonusUntil } as any)
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+      toast.success("Bônus de 7 dias ativado!");
+      setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, referral_bonus_until: bonusUntil } : p));
+    } catch (err: any) {
+      toast.error("Erro ao ativar bônus: " + err.message);
+    }
+    setUpdatingPlanId(null);
+  };
+
   const handleChangePlan = async (id: string, plan: string) => {
+    if (plan === "bonus7") { handleActivateBonus(id); return; }
     setUpdatingPlanId(id);
     try {
       await updatePlan(id, plan);
@@ -385,7 +403,7 @@ const AdminPage = () => {
                           onValueChange={(val) => handleChangePlan(profile.id, val)}
                           disabled={updatingPlanId === profile.id}
                         >
-                          <SelectTrigger className="h-8 text-xs w-28 gap-1">
+                          <SelectTrigger className="h-8 text-xs w-32 gap-1">
                             {updatingPlanId === profile.id
                               ? <Loader2 className="h-3 w-3 animate-spin" />
                               : <Crown className="h-3 w-3 text-yellow-500" />}
@@ -395,8 +413,14 @@ const AdminPage = () => {
                             <SelectItem value="free">Gratuito</SelectItem>
                             <SelectItem value="monthly">Mensal</SelectItem>
                             <SelectItem value="yearly">Anual</SelectItem>
+                            <SelectItem value="bonus7">
+                              <span className="flex items-center gap-1.5 text-pink-500 font-medium">✨ Bônus 7 dias</span>
+                            </SelectItem>
                           </SelectContent>
                         </Select>
+                        {(profile as any).referral_bonus_until && new Date((profile as any).referral_bonus_until) > new Date() && (
+                          <span className="text-[10px] bg-pink-100 text-pink-600 dark:bg-pink-900/40 dark:text-pink-400 px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">✨ Bônus ativo</span>
+                        )}
                         <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 border-primary text-primary hover:bg-primary/10" onClick={() => openQuickEdit(profile)}>
                           <Pencil className="h-3.5 w-3.5" /> Rápido
                         </Button>

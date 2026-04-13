@@ -665,23 +665,47 @@ const RegisterPage = () => {
                       />
                     </div>
                     {/* Código de indicação */}
-                    <div className="border border-dashed border-border rounded-xl p-4 space-y-2 bg-muted/30">
-                      <Label htmlFor="refCodeInput" className="text-sm flex items-center gap-1.5">
-                        <Gift className="h-3.5 w-3.5 text-primary" />
-                        Código de indicação <span className="text-muted-foreground font-normal">(opcional)</span>
-                      </Label>
-                      <Input
-                        id="refCodeInput"
-                        value={refCode}
-                        onChange={(e) => {
-                          const val = e.target.value.toUpperCase().trim();
-                          localStorage.setItem("referral_ref", val);
-                        }}
-                        placeholder="Ex: AB12CD"
-                        maxLength={10}
-                        className="uppercase"
-                      />
-                      <p className="text-xs text-muted-foreground">Se alguém te indicou, coloque o código aqui e ela receberá R$5 quando você assinar um plano.</p>
+                    <div className="rounded-xl overflow-hidden border border-primary/30" style={{ background: "linear-gradient(135deg, rgba(233,30,140,0.06), rgba(233,30,140,0.02))" }}>
+                      <div className="px-4 pt-4 pb-3 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-primary/10">
+                            <Gift className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Tem um código de indicação?</p>
+                            <p className="text-xs text-muted-foreground">Coloque e ganhe benefícios exclusivos!</p>
+                          </div>
+                        </div>
+
+                        {/* Benefícios */}
+                        <div className="grid grid-cols-1 gap-1.5">
+                          {[
+                            { icon: "✨", text: "Perfil em destaque por 7 dias" },
+                            { icon: "📸", text: "5 fotos no plano gratuito (em vez de 3)" },
+                            { icon: "🚀", text: "Aparece no topo da listagem" },
+                          ].map((b) => (
+                            <div key={b.text} className="flex items-center gap-2 text-xs text-foreground">
+                              <span>{b.icon}</span>
+                              <span>{b.text}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <Input
+                          id="refCodeInput"
+                          value={refCode}
+                          onChange={(e) => {
+                            const val = e.target.value.toUpperCase().trim();
+                            localStorage.setItem("referral_ref", val);
+                          }}
+                          placeholder="Ex: AB12CD"
+                          maxLength={10}
+                          className="uppercase font-mono tracking-widest text-center text-base h-11 border-primary/40 focus:border-primary"
+                        />
+                        <p className="text-xs text-muted-foreground text-center">
+                          Quem te indicou também recebe <span className="text-primary font-semibold">R$5</span> de bônus 💕
+                        </p>
+                      </div>
                     </div>
 
                     <Button type="button" className="w-full" onClick={() => setStep(2)}>
