@@ -16,6 +16,7 @@ import {
   Home, Users, Clock, Camera, Eye,
   User, MessageSquare, ChevronDown, ChevronUp, ShieldCheck, Video,
   DollarSign, Banknote, CreditCard, Smartphone, Pencil, Send, Loader2,
+  ChevronLeft, ChevronRight, X,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -97,7 +98,7 @@ const ProfileDetail = () => {
     : 0;
 
   const [activeTab, setActiveTab] = useState<"fotos" | "sobre" | "avaliacoes">("fotos");
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [expandedService, setExpandedService] = useState<string | null>(null);
 
   useSeo({
@@ -398,7 +399,7 @@ const ProfileDetail = () => {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {profile.images.map((img, i) => (
-                    <button key={i} onClick={() => setSelectedImage(img)} className="aspect-[3/4] rounded-xl overflow-hidden group relative">
+                    <button key={i} onClick={() => setSelectedImageIndex(i)} className="aspect-[3/4] rounded-xl overflow-hidden group relative">
                       {isVideoUrl(img) ? (
                         <video src={img} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" muted playsInline />
                       ) : (
@@ -814,18 +815,64 @@ const ProfileDetail = () => {
         </div>
 
         {/* Lightbox */}
-        {selectedImage && (
-          <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
-            <div className="relative" onClick={(e) => e.stopPropagation()}>
-              {isVideoUrl(selectedImage) ? (
-                <video src={selectedImage} className="max-w-full max-h-[90vh] rounded-lg" controls autoPlay />
-              ) : (
-                <img src={selectedImage} alt="Foto ampliada" className="max-w-full max-h-[90vh] object-contain rounded-lg" />
+        {selectedImageIndex !== null && profile && (() => {
+          const images = profile.images;
+          const current = images[selectedImageIndex];
+          const goPrev = () => setSelectedImageIndex((selectedImageIndex - 1 + images.length) % images.length);
+          const goNext = () => setSelectedImageIndex((selectedImageIndex + 1) % images.length);
+
+          // swipe touch
+          let touchStartX = 0;
+          const onTouchStart = (e: React.TouchEvent) => { touchStartX = e.touches[0].clientX; };
+          const onTouchEnd = (e: React.TouchEvent) => {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) diff > 0 ? goNext() : goPrev();
+          };
+
+          return (
+            <div
+              className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+              onTouchStart={onTouchStart}
+              onTouchEnd={onTouchEnd}
+              onKeyDown={(e) => { if (e.key === "ArrowLeft") goPrev(); if (e.key === "ArrowRight") goNext(); if (e.key === "Escape") setSelectedImageIndex(null); }}
+              tabIndex={0}
+            >
+              {/* Fechar */}
+              <button onClick={() => setSelectedImageIndex(null)} className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+
+              {/* Anterior */}
+              {images.length > 1 && (
+                <button onClick={goPrev} className="absolute left-3 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white transition-colors">
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
               )}
-              <Watermark className="absolute bottom-3 right-3" size="lg" />
+
+              {/* Imagem */}
+              <div className="relative max-w-full max-h-[90vh] flex items-center justify-center px-14">
+                {isVideoUrl(current) ? (
+                  <video src={current} className="max-w-full max-h-[90vh] rounded-lg" controls autoPlay />
+                ) : (
+                  <img src={current} alt={`Foto ${selectedImageIndex + 1}`} className="max-w-full max-h-[90vh] object-contain rounded-lg" />
+                )}
+                <Watermark className="absolute bottom-3 right-3" size="lg" />
+              </div>
+
+              {/* Próxima */}
+              {images.length > 1 && (
+                <button onClick={goNext} className="absolute right-3 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white transition-colors">
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              )}
+
+              {/* Contador */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+                {selectedImageIndex + 1} / {images.length}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </main>
       <Footer />
     </div>

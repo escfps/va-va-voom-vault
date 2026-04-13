@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Instagram } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -43,7 +44,16 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border mt-10 pt-6 text-center text-sm text-muted-foreground">
+        <div className="border-t border-border mt-10 pt-6 flex flex-col items-center gap-3 text-sm text-muted-foreground">
+          <a
+            href="https://instagram.com/xmodelprive"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 hover:text-primary transition-colors"
+          >
+            <Instagram className="h-5 w-5" />
+            <span>@xmodelprive</span>
+          </a>
           <p>© {new Date().getFullYear()} Model X. Todos os direitos reservados.</p>
         </div>
       </div>
