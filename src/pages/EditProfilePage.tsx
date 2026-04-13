@@ -45,6 +45,7 @@ const EditProfilePage = () => {
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [referralCode, setReferralCode] = useState<string>("");
   const [referralBalance, setReferralBalance] = useState<number>(0);
+  const [referralBonusActive, setReferralBonusActive] = useState(false);
   const [showPlanChange, setShowPlanChange] = useState(false);
   const [selectedNewPlan, setSelectedNewPlan] = useState<string | null>(null);
   const [planSaving, setPlanSaving] = useState(false);
@@ -116,6 +117,8 @@ const EditProfilePage = () => {
       setPlanExpiresAt(data.plan_expires_at || null);
       setReferralCode((data as any).referral_code || "");
       setReferralBalance((data as any).referral_balance || 0);
+      const bonusUntil = (data as any).referral_bonus_until;
+      setReferralBonusActive(!!bonusUntil && new Date(bonusUntil) > new Date());
 
       const types = (data.tags ?? []).filter((t: string) => t === "acompanhante" || t === "conteudo");
       const effectiveTypes = types.length > 0 ? types : ["acompanhante"];
@@ -214,18 +217,19 @@ const EditProfilePage = () => {
   const uploadContentFiles = async (files: File[]) => {
     if (!user || files.length === 0) return;
 
-    // Plano gratuito: máx 3 fotos, sem vídeos
+    // Plano gratuito: máx 3 fotos (ou 5 com bônus de indicação), sem vídeos
     if (!isPaidPlan) {
       const incomingVideos = files.filter((f) => f.type.startsWith("video/"));
       const currentPhotoCount = contentMedia.filter((m) => !isVideoUrl(m)).length;
       const incomingPhotos = files.filter((f) => f.type.startsWith("image/"));
+      const photoLimit = referralBonusActive ? 5 : 3;
 
       if (incomingVideos.length > 0) {
         toast.error("Upload de vídeos é exclusivo dos planos Mensal e Anual. Faça upgrade para liberar.");
         return;
       }
-      if (incomingPhotos.length > 0 && currentPhotoCount + incomingPhotos.length > 3) {
-        toast.error(`Plano Gratuito: máximo de 3 fotos (você já tem ${currentPhotoCount}). Faça upgrade para ilimitado.`);
+      if (incomingPhotos.length > 0 && currentPhotoCount + incomingPhotos.length > photoLimit) {
+        toast.error(`${referralBonusActive ? "Bônus de indicação" : "Plano Gratuito"}: máximo de ${photoLimit} fotos (você já tem ${currentPhotoCount}). Faça upgrade para ilimitado.`);
         return;
       }
     }

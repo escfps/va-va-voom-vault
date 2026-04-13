@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Trash2, Loader2, Search, User, Heart, ShoppingBag, ExternalLink, Shield, Users, CheckCircle, Crown, Pencil, Clock, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updatePlan } from "@/lib/updatePlan";
+import { FEATURES } from "@/lib/features";
 
 // ─── Configure o e-mail do administrador aqui ───────────────────────────────
 const ADMIN_EMAILS = ["bruno13@hotmail.com", "texasgramado@gmail.com"];
@@ -89,11 +90,13 @@ const AdminPage = () => {
 
     if (search.trim()) {
       const q = search.toLowerCase();
+      const qDigits = q.replace(/\D/g, ""); // só números para busca por telefone
       list = list.filter(
         (p) =>
           p.name?.toLowerCase().includes(q) ||
           p.city?.toLowerCase().includes(q) ||
-          p.state?.toLowerCase().includes(q)
+          p.state?.toLowerCase().includes(q) ||
+          (qDigits && p.phone?.replace(/\D/g, "").includes(qDigits))
       );
     }
 
@@ -255,7 +258,7 @@ const AdminPage = () => {
             {[
               { label: "Total de perfis", value: profiles.length, icon: <Users className="h-4 w-4" /> },
               { label: "Acompanhantes", value: totalAcompanhante, icon: <Heart className="h-4 w-4" /> },
-              { label: "Criadoras", value: totalConteudo, icon: <ShoppingBag className="h-4 w-4" /> },
+              ...(FEATURES.CRIADORA_CONTEUDO ? [{ label: "Criadoras", value: totalConteudo, icon: <ShoppingBag className="h-4 w-4" /> }] : []),
               { label: "Verificadas", value: totalVerified, icon: <CheckCircle className="h-4 w-4" /> },
             ].map(({ label, value, icon }) => (
               <Card key={label}>
@@ -277,17 +280,17 @@ const AdminPage = () => {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar por nome, cidade ou estado..."
+                    placeholder="Buscar por nome, cidade, estado ou WhatsApp..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-9"
                   />
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {(["all", "acompanhante", "conteudo"] as const).map((t) => (
+                  {(FEATURES.CRIADORA_CONTEUDO ? ["all", "acompanhante", "conteudo"] : ["all", "acompanhante"]).map((t) => (
                     <button
                       key={t}
-                      onClick={() => setFilterType(t)}
+                      onClick={() => setFilterType(t as "all" | "acompanhante" | "conteudo")}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                         filterType === t
                           ? "bg-primary text-primary-foreground"

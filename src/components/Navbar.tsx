@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X as XIcon, User, LogIn, UserCheck, Heart, LogOut, Crown, Check, Star, Zap, Loader2, Calendar, ShoppingBag, Shield, Gift, Copy, Wallet } from "lucide-react";
 
 const ADMIN_EMAILS = ["bruno13@hotmail.com", "texasgramado@gmail.com"];
+import { FEATURES } from "@/lib/features";
 import { useFavorites } from "@/hooks/useFavorites";
 import {
   Dialog,
@@ -389,8 +390,8 @@ const Navbar = () => {
                     </Link>
                   )}
 
-                  {/* Vendedora de conteúdo */}
-                  {profileTypes.includes("conteudo") ? (
+                  {/* Vendedora de conteúdo — desativado temporariamente */}
+                  {FEATURES.CRIADORA_CONTEUDO && (profileTypes.includes("conteudo") ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-all">
@@ -427,7 +428,7 @@ const Navbar = () => {
                         <p className="text-[10px] leading-tight text-muted-foreground">Criar perfil</p>
                       </div>
                     </Link>
-                  )}
+                  ))}
                 </>
               )}
 
@@ -554,8 +555,8 @@ const Navbar = () => {
                     </Link>
                   )}
 
-                  {/* Botão: Vendedora de Conteúdos */}
-                  {profileTypes.includes("conteudo") ? (
+                  {/* Botão: Vendedora de Conteúdos — desativado temporariamente */}
+                  {FEATURES.CRIADORA_CONTEUDO && (profileTypes.includes("conteudo") ? (
                     <div className="space-y-1">
                       <div className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border-2 border-primary bg-primary/5 text-left">
                         <ShoppingBag className="h-4 w-4 shrink-0 text-primary" />
@@ -589,7 +590,7 @@ const Navbar = () => {
                         </div>
                       </button>
                     </Link>
-                  )}
+                  ))}
 
                   <Button variant="outline" className="w-full gap-2" onClick={() => { setIsOpen(false); handleSignOut(); }}>
                     <LogOut className="h-4 w-4" /> Sair
@@ -648,20 +649,22 @@ const Navbar = () => {
               </div>
               <span className="text-muted-foreground group-hover:text-primary transition-colors text-xl">›</span>
             </Link>
-            <Link
-              to="/cadastro?tipo=conteudo"
-              onClick={() => setShowSignup(false)}
-              className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-muted transition-all group"
-            >
-              <div className="p-2.5 rounded-full bg-primary/10">
-                <ShoppingBag className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-primary">Vendedora de conteúdo</p>
-                <p className="text-sm text-muted-foreground">Venda fotos, vídeos e packs exclusivos online.</p>
-              </div>
-              <span className="text-muted-foreground group-hover:text-primary transition-colors text-xl">›</span>
-            </Link>
+            {FEATURES.CRIADORA_CONTEUDO && (
+              <Link
+                to="/cadastro?tipo=conteudo"
+                onClick={() => setShowSignup(false)}
+                className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-muted transition-all group"
+              >
+                <div className="p-2.5 rounded-full bg-primary/10">
+                  <ShoppingBag className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-primary">Vendedora de conteúdo</p>
+                  <p className="text-sm text-muted-foreground">Venda fotos, vídeos e packs exclusivos online.</p>
+                </div>
+                <span className="text-muted-foreground group-hover:text-primary transition-colors text-xl">›</span>
+              </Link>
+            )}
           </div>
         </DialogContent>
       </Dialog>

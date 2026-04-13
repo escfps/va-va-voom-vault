@@ -13,7 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Camera, X, Upload, Loader2, Video, Heart, User, ShoppingBag, Check, ImageIcon } from "lucide-react";
+import { Camera, X, Upload, Loader2, Video, Heart, User, ShoppingBag, Check, ImageIcon, Gift } from "lucide-react";
+import { FEATURES } from "@/lib/features";
 import ScheduleSection, { defaultSchedule, scheduleToDb } from "@/components/register/ScheduleSection";
 import ServicesSection, { defaultServices, servicesToDb } from "@/components/register/ServicesSection";
 import PaymentSection from "@/components/register/PaymentSection";
@@ -375,6 +376,7 @@ const RegisterPage = () => {
             reviews: [],
             referral_code: referralCode,
             referred_by: refCode || null,
+            referral_bonus_until: refCode ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() : null,
           } as any)
           .select("id")
           .single();
@@ -497,45 +499,48 @@ const RegisterPage = () => {
                       </div>
                     </button>
 
-                    {/* Card Vendedora de Conteúdo */}
-                    <button
-                      type="button"
-                      onClick={() => toggleType("conteudo")}
-                      className={`w-full text-left p-4 rounded-xl border-2 transition-colors group ${
-                        isType("conteudo")
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className={`mt-0.5 p-2 rounded-lg transition-colors ${
-                          isType("conteudo") ? "bg-primary/20" : "bg-muted group-hover:bg-primary/10"
-                        }`}>
-                          <ShoppingBag className={`h-5 w-5 ${isType("conteudo") ? "text-primary" : "text-muted-foreground"}`} />
-                        </div>
-                        <div className="flex-1">
-                          <p className={`font-semibold ${isType("conteudo") ? "text-primary" : "text-foreground"}`}>
-                            Vendedora de Conteúdo
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-0.5">
-                            Venda fotos, vídeos e packs exclusivos. Atendimento 100% online.
-                          </p>
-                        </div>
-                        <div className={`mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                          isType("conteudo") ? "border-primary bg-primary" : "border-border"
-                        }`}>
-                          {isType("conteudo") && <Check className="h-3 w-3 text-primary-foreground" />}
-                        </div>
-                      </div>
-                    </button>
+                    {/* Card Vendedora de Conteúdo — desativado temporariamente */}
+                    {FEATURES.CRIADORA_CONTEUDO && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => toggleType("conteudo")}
+                          className={`w-full text-left p-4 rounded-xl border-2 transition-colors group ${
+                            isType("conteudo")
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className={`mt-0.5 p-2 rounded-lg transition-colors ${
+                              isType("conteudo") ? "bg-primary/20" : "bg-muted group-hover:bg-primary/10"
+                            }`}>
+                              <ShoppingBag className={`h-5 w-5 ${isType("conteudo") ? "text-primary" : "text-muted-foreground"}`} />
+                            </div>
+                            <div className="flex-1">
+                              <p className={`font-semibold ${isType("conteudo") ? "text-primary" : "text-foreground"}`}>
+                                Vendedora de Conteúdo
+                              </p>
+                              <p className="text-sm text-muted-foreground mt-0.5">
+                                Venda fotos, vídeos e packs exclusivos. Atendimento 100% online.
+                              </p>
+                            </div>
+                            <div className={`mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                              isType("conteudo") ? "border-primary bg-primary" : "border-border"
+                            }`}>
+                              {isType("conteudo") && <Check className="h-3 w-3 text-primary-foreground" />}
+                            </div>
+                          </div>
+                        </button>
 
-                    {/* Badge quando os dois estão selecionados */}
-                    {isType("acompanhante") && isType("conteudo") && (
-                      <div className="text-center py-1">
-                        <span className="inline-block text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
-                          Perfil combinado — suas duas categorias aparecerão juntas
-                        </span>
-                      </div>
+                        {isType("acompanhante") && isType("conteudo") && (
+                          <div className="text-center py-1">
+                            <span className="inline-block text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
+                              Perfil combinado — suas duas categorias aparecerão juntas
+                            </span>
+                          </div>
+                        )}
+                      </>
                     )}
 
                     <Button
@@ -659,6 +664,26 @@ const RegisterPage = () => {
                         placeholder={isType("acompanhante") ? "300" : "30"}
                       />
                     </div>
+                    {/* Código de indicação */}
+                    <div className="border border-dashed border-border rounded-xl p-4 space-y-2 bg-muted/30">
+                      <Label htmlFor="refCodeInput" className="text-sm flex items-center gap-1.5">
+                        <Gift className="h-3.5 w-3.5 text-primary" />
+                        Código de indicação <span className="text-muted-foreground font-normal">(opcional)</span>
+                      </Label>
+                      <Input
+                        id="refCodeInput"
+                        value={refCode}
+                        onChange={(e) => {
+                          const val = e.target.value.toUpperCase().trim();
+                          localStorage.setItem("referral_ref", val);
+                        }}
+                        placeholder="Ex: AB12CD"
+                        maxLength={10}
+                        className="uppercase"
+                      />
+                      <p className="text-xs text-muted-foreground">Se alguém te indicou, coloque o código aqui e ela receberá R$5 quando você assinar um plano.</p>
+                    </div>
+
                     <Button type="button" className="w-full" onClick={() => setStep(2)}>
                       Próximo: Aparência
                     </Button>

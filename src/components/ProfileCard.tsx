@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Star, CheckCircle, Crown } from "lucide-react";
+import { MapPin, Star, CheckCircle, Crown, Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import FavoriteButton from "@/components/FavoriteButton";
 import Watermark from "@/components/Watermark";
@@ -15,6 +15,7 @@ interface ProfileCardProps {
   rating: number;
   tags?: string[];
   plan?: string;
+  referralBonusUntil?: string | null;
 }
 
 const ProfileCard = ({
@@ -28,14 +29,18 @@ const ProfileCard = ({
   rating,
   tags = [],
   plan = "free",
+  referralBonusUntil,
 }: ProfileCardProps) => {
   const isYearly = plan === "yearly";
   const isMonthly = plan === "monthly";
+  const hasBonus = !!referralBonusUntil && new Date(referralBonusUntil) > new Date();
 
   const wrapperClass = isYearly
     ? "relative group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
     : isMonthly
     ? "group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 border-[3px] border-red-500 shadow-[0_0_14px_rgba(239,68,68,0.5)]"
+    : hasBonus
+    ? "group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
     : "group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 border border-border shadow-sm";
 
   const card = (
@@ -94,6 +99,12 @@ const ProfileCard = ({
               VIP
             </Badge>
           )}
+          {hasBonus && !isYearly && !isMonthly && (
+            <Badge className="gap-1 text-xs font-bold tracking-wide text-white" style={{ background: "linear-gradient(135deg, #e91e8c, #ff6ec7)", boxShadow: "0 2px 8px rgba(233,30,140,0.5)" }}>
+              <Gift className="h-3 w-3" />
+              DESTAQUE
+            </Badge>
+          )}
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
@@ -130,9 +141,30 @@ const ProfileCard = ({
     </Link>
   );
 
-  if (!isYearly) return card;
+  if (!isYearly && !hasBonus) return card;
 
-  // Wrapper com borda dourada animada via pseudo-elemento simulado com div
+  // Wrapper bônus rosa pulsante
+  if (hasBonus && !isYearly) {
+    return (
+      <div
+        className="relative rounded-xl p-[3px] group"
+        style={{
+          background: "linear-gradient(135deg, #e91e8c, #ff6ec7, #e91e8c)",
+          animation: "pinkPulse 2.5s ease-in-out infinite",
+        }}
+      >
+        <style>{`
+          @keyframes pinkPulse {
+            0%, 100% { box-shadow: 0 0 14px rgba(233,30,140,0.5), 0 4px 24px rgba(233,30,140,0.2); }
+            50% { box-shadow: 0 0 28px rgba(233,30,140,0.9), 0 4px 36px rgba(233,30,140,0.5); }
+          }
+        `}</style>
+        {card}
+      </div>
+    );
+  }
+
+  // Wrapper com borda dourada animada — plano anual
   return (
     <div
       className="relative rounded-xl p-[3px] group"

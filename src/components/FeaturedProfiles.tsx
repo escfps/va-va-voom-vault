@@ -33,7 +33,7 @@ const FeaturedProfiles = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {profiles.map((profile) => (
-              <ProfileCard key={profile.id} {...profile} />
+              <ProfileCard key={profile.id} {...profile} referralBonusUntil={(profile as any).referralBonusUntil} />
             ))}
           </div>
         )}

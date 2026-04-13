@@ -68,7 +68,12 @@ function mapDbToProfile(row: any): Profile {
     userId: row.user_id ?? undefined,
     isActive: row.is_active ?? true,
     status: row.status ?? "pending",
+    referralBonusUntil: row.referral_bonus_until ?? null,
   };
+}
+
+function hasActiveBonus(profile: any): boolean {
+  return !!profile.referralBonusUntil && new Date(profile.referralBonusUntil) > new Date();
 }
 
 const LISTING_FIELDS = [
@@ -79,21 +84,40 @@ const LISTING_FIELDS = [
 ].join(", ");
 
 export async function fetchProfiles(): Promise<Profile[]> {
-  const { data, error } = await (supabase
+  // Tenta com o campo de bônus; se a coluna não existir ainda, faz fallback sem ela
+  let { data, error } = await (supabase
     .from("profiles")
-    .select(LISTING_FIELDS) as any)
+    .select(LISTING_FIELDS + ", referral_bonus_until") as any)
     .eq("status", "approved")
     .eq("is_active", true)
     .limit(200);
 
   if (error) {
-    console.error("Error fetching profiles:", error);
-    return [];
+    // Fallback sem a coluna de bônus (migration ainda não rodada)
+    const fallback = await (supabase
+      .from("profiles")
+      .select(LISTING_FIELDS) as any)
+      .eq("status", "approved")
+      .eq("is_active", true)
+      .limit(200);
+
+    if (fallback.error) {
+      console.error("Error fetching profiles:", fallback.error);
+      return [];
+    }
+    data = fallback.data;
   }
 
   return (data ?? [])
     .map(mapDbToProfile)
-    .sort((a, b) => planRank(a.plan) - planRank(b.plan));
+    .sort((a: any, b: any) => {
+      // Bonificadas aparecem logo após os planos pagos
+      const bonusA = hasActiveBonus(a) ? 0 : 1;
+      const bonusB = hasActiveBonus(b) ? 0 : 1;
+      const rankA = planRank(a.plan) * 10 + bonusA;
+      const rankB = planRank(b.plan) * 10 + bonusB;
+      return rankA - rankB;
+    });
 }
 
 export async function fetchProfileById(id: string): Promise<Profile | null> {
