@@ -6,9 +6,9 @@ import { useSeo } from "@/lib/useSeo";
 
 const Index = () => {
   useSeo({
-    title: "Acompanhantes Verificadas no Brasil",
-    description: "Encontre acompanhantes verificadas perto de você. Perfis reais com fotos exclusivas, avaliações e contato direto via WhatsApp. Discreção total.",
-    keywords: "acompanhantes Brasil, acompanhante verificada, modelos, garotas de programa, xmodelprive",
+    title: "XMODELPRIVE - A nova plataforma de acompanhantes que está conquistando o Brasil!",
+    description: "Modelos com perfis selecionados, fotos reais, contato direto e total liberdade para escolher, anunciar e faturar. Tudo com descrição completa, transparência e uma experiência exclusiva.",
+    keywords: "acompanhantes Brasil, acompanhante verificada, modelos, garotas de programa, xmodelprive, anunciar acompanhante",
     canonical: "https://xmodelprive.com",
   });
   return (
