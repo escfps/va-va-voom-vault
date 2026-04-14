@@ -109,10 +109,10 @@ const HeroSection = () => {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-              Bem-vindo à sua nova <span className="text-primary">plataforma de modelos</span>
+              Bem-vindo à mais nova <span className="text-primary">plataforma de Acompanhantes</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-              A maior plataforma de divulgação de conteúdo. Encontre perfis verificados com fotos, vídeos e informações
+              A mais nova plataforma de divulgação de conteúdo. Encontre perfis verificados com fotos, vídeos e informações
               completas. Segurança e discrição garantidas.
             </p>
             <Button
