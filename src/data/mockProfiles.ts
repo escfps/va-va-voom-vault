@@ -76,6 +76,7 @@ export interface Profile {
   referralBonusUntil?: string | null;
   viewCount?: number;
   referralCount?: number;
+  phonePremiumOnly?: boolean;
 }
 
 const allServices: ServiceItem[] = [

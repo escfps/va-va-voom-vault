@@ -89,6 +89,7 @@ const EditProfilePage = () => {
     piercings: false,
     silicone: false,
     smoker: false,
+    phonePremiumOnly: false,
   });
 
   const update = (field: string, value: string | boolean) =>
@@ -166,6 +167,7 @@ const EditProfilePage = () => {
         piercings: data.piercings || false,
         silicone: data.silicone || false,
         smoker: data.smoker || false,
+        phonePremiumOnly: (data as any).phone_premium_only || false,
       });
       setLoading(false);
     };
@@ -381,6 +383,7 @@ const EditProfilePage = () => {
           piercings: form.piercings,
           silicone: form.silicone,
           smoker: form.smoker,
+          ...({ phone_premium_only: form.phonePremiumOnly } as any),
           location: `${form.city} - ${form.state}`,
           places_served: form.hasOwnPlace ? "Local próprio" : "Hotéis e motéis",
           schedule: scheduleToDb(schedule),
@@ -611,7 +614,17 @@ const EditProfilePage = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div><Label htmlFor="age">Idade *</Label><Input id="age" type="number" min="18" max="60" value={form.age} onChange={(e) => update("age", e.target.value)} required /></div>
-                      <div><Label htmlFor="phone">WhatsApp *</Label><Input id="phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} required /></div>
+                      <div>
+                        <Label htmlFor="phone">WhatsApp *</Label>
+                        <Input id="phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} required />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between rounded-xl border border-border p-4">
+                      <div>
+                        <p className="font-medium text-sm text-foreground">WhatsApp só para assinantes Premium</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Clientes precisam ser assinantes Premium para ver seu número</p>
+                      </div>
+                      <Switch checked={form.phonePremiumOnly} onCheckedChange={(v) => update("phonePremiumOnly", v)} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div><Label htmlFor="city">Cidade *</Label><Input id="city" value={form.city} onChange={(e) => update("city", e.target.value)} required /></div>

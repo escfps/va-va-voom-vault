@@ -63,6 +63,31 @@ const AdminPage = () => {
   const [filterType, setFilterType] = useState<"all" | "acompanhante" | "conteudo">("all");
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
 
+  // Clientes (visitantes)
+  const [visitors, setVisitors] = useState<any[]>([]);
+  const [visitorsLoading, setVisitorsLoading] = useState(false);
+
+  const fetchVisitors = async () => {
+    setVisitorsLoading(true);
+    const { data } = await (supabase.from("user_profiles" as any).select("*").order("created_at", { ascending: false }));
+    setVisitors(data ?? []);
+    setVisitorsLoading(false);
+  };
+
+  const handleActivateVisitorPlan = async (userId: string, plan: "monthly" | "yearly") => {
+    const months = plan === "yearly" ? 12 : 1;
+    const expiresAt = new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000).toISOString();
+    await (supabase.from("user_profiles" as any).upsert({ user_id: userId, visitor_plan: plan, visitor_plan_expires_at: expiresAt }, { onConflict: "user_id" }));
+    toast.success(`Plano ${plan === "yearly" ? "Anual" : "Mensal"} ativado!`);
+    fetchVisitors();
+  };
+
+  const handleRevokeVisitorPlan = async (userId: string) => {
+    await (supabase.from("user_profiles" as any).update({ visitor_plan: "free", visitor_plan_expires_at: null }).eq("user_id", userId));
+    toast.success("Plano revogado.");
+    fetchVisitors();
+  };
+
   // Edição rápida
   const [quickEditProfile, setQuickEditProfile] = useState<any | null>(null);
   const [quickEditSaving, setQuickEditSaving] = useState(false); // usado no modal
@@ -600,6 +625,64 @@ const AdminPage = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Clientes Premium */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-primary" /> Clientes Premium
+                </CardTitle>
+                <Button size="sm" variant="outline" onClick={fetchVisitors} disabled={visitorsLoading}>
+                  {visitorsLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Carregar"}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {visitors.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Clique em "Carregar" para ver os clientes cadastrados.</p>
+              ) : (
+                <div className="space-y-3">
+                  {visitors.map((v: any) => {
+                    const isPremium = v.visitor_plan && v.visitor_plan !== "free" &&
+                      (!v.visitor_plan_expires_at || new Date(v.visitor_plan_expires_at) > new Date());
+                    return (
+                      <div key={v.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/20">
+                        <div className="flex-1 min-w-0 space-y-0.5">
+                          <p className="text-sm font-semibold text-foreground">{v.display_name || "—"}</p>
+                          {v.email && (
+                            <p className="text-xs text-muted-foreground truncate">{v.email}</p>
+                          )}
+                          {v.bio && (
+                            <a href={`https://wa.me/55${v.bio.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-xs text-green-500 hover:underline flex items-center gap-1">
+                              <MessageCircle className="h-3 w-3" /> {v.bio}
+                            </a>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            Plano: <span className={isPremium ? "text-green-500 font-medium" : ""}>{v.visitor_plan || "free"}</span>
+                            {v.visitor_plan_expires_at && (
+                              <span> · expira {new Date(v.visitor_plan_expires_at).toLocaleDateString("pt-BR")}</span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex gap-1.5 shrink-0">
+                          {!isPremium ? (
+                            <>
+                              <Button size="sm" className="text-xs h-7 px-2" onClick={() => handleActivateVisitorPlan(v.user_id, "monthly")}>Mensal</Button>
+                              <Button size="sm" className="text-xs h-7 px-2 bg-yellow-500 hover:bg-yellow-600 text-white" onClick={() => handleActivateVisitorPlan(v.user_id, "yearly")}>Anual</Button>
+                            </>
+                          ) : (
+                            <Button size="sm" variant="outline" className="text-xs h-7 px-2" onClick={() => handleRevokeVisitorPlan(v.user_id)}>Revogar</Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
         </div>
       </main>
 

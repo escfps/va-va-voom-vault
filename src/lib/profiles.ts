@@ -88,6 +88,7 @@ function mapDbToProfile(row: any): Profile {
     referralBonusUntil: row.referral_bonus_until ?? null,
     viewCount: row.view_count ?? 0,
     referralCount: row.referral_count ?? 0,
+    phonePremiumOnly: row.phone_premium_only ?? false,
   };
 }
 

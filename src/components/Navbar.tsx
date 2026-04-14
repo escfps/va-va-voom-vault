@@ -192,6 +192,9 @@ const Navbar = () => {
               <Link to="/ranking" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
                 🏆 Ranking
               </Link>
+              <Link to="/cadastro-usuario" className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                👤 Sou cliente
+              </Link>
               {/* ── Logged in + HAS profile ── */}
               {user && planInfo?.profileId && (
                 <>
@@ -630,6 +633,9 @@ const Navbar = () => {
               )}
               <Link to="/ranking" onClick={() => setIsOpen(false)} className="flex items-center gap-2 py-2 text-sm font-semibold">
                 🏆 Ranking
+              </Link>
+              <Link to="/cadastro-usuario" onClick={() => setIsOpen(false)} className="flex items-center gap-2 py-2 text-sm font-semibold">
+                👤 Sou cliente
               </Link>
             </div>
           )}

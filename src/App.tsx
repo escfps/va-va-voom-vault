@@ -25,6 +25,8 @@ import RankingPage from "./pages/RankingPage";
 import ContaPage from "./pages/ContaPage";
 import PagamentoConfirmadoPage from "./pages/PagamentoConfirmadoPage";
 import CityPage from "./pages/CityPage";
+import ClientPlanosPage from "./pages/ClientPlanosPage";
+import ContaClientePage from "./pages/ContaClientePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +48,8 @@ const App = () => (
             <Route path="/cadastro" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/cadastro-usuario" element={<SignupPage />} />
+            <Route path="/planos-cliente" element={<ClientPlanosPage />} />
+            <Route path="/conta-cliente" element={<ContaClientePage />} />
             <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/favoritos" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />

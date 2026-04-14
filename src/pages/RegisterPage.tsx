@@ -143,6 +143,7 @@ const RegisterPage = () => {
     piercings: false,
     silicone: false,
     smoker: false,
+    phonePremiumOnly: false,
   });
 
   const update = (field: string, value: string | boolean) =>
@@ -264,6 +265,7 @@ const RegisterPage = () => {
         piercings: form.piercings,
         silicone: form.silicone,
         smoker: form.smoker,
+        ...({ phone_premium_only: form.phonePremiumOnly } as any),
         languages: ["Português"],
         location: `${form.city} - ${form.state}`,
         payment_methods: paymentMethods,
@@ -329,6 +331,7 @@ const RegisterPage = () => {
             piercings: form.piercings,
             silicone: form.silicone,
             smoker: form.smoker,
+            ...({ phone_premium_only: form.phonePremiumOnly } as any),
             schedule: scheduleToDb(schedule),
             detailed_services: servicesToDb(services),
             payment_methods: paymentMethods,
@@ -462,6 +465,24 @@ const RegisterPage = () => {
                 {/* ── Step 0: Seleção de tipos (multi-select) ── */}
                 {step === 0 && (
                   <div className="space-y-4">
+                    {/* Tabs Acompanhante / Cliente */}
+                    <div className="flex rounded-xl border border-border overflow-hidden mb-2">
+                      <button
+                        type="button"
+                        className="flex-1 py-2.5 text-sm font-semibold transition-colors bg-primary text-primary-foreground"
+                        disabled
+                      >
+                        Sou acompanhante
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/cadastro-usuario")}
+                        className="flex-1 py-2.5 text-sm font-medium transition-colors bg-background text-muted-foreground hover:bg-muted"
+                      >
+                        Sou cliente
+                      </button>
+                    </div>
+
                     <p className="text-sm text-muted-foreground text-center">
                       Você pode selecionar mais de uma categoria na mesma conta.
                     </p>
@@ -551,30 +572,6 @@ const RegisterPage = () => {
                       Continuar
                     </Button>
 
-                    <div className="relative flex items-center gap-3 py-1">
-                      <div className="flex-1 h-px bg-border" />
-                      <span className="text-xs text-muted-foreground">ou</span>
-                      <div className="flex-1 h-px bg-border" />
-                    </div>
-
-                    {/* Opção Cliente */}
-                    <button
-                      type="button"
-                      onClick={() => navigate("/cadastro-usuario")}
-                      className="w-full text-left p-4 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-colors group"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="mt-0.5 p-2 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                          <User className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-foreground">Quero ser cliente</p>
-                          <p className="text-sm text-muted-foreground mt-0.5">
-                            Explore perfis, salve favoritos e entre em contato.
-                          </p>
-                        </div>
-                      </div>
-                    </button>
                   </div>
                 )}
 
@@ -601,6 +598,13 @@ const RegisterPage = () => {
                         <Label htmlFor="phone">WhatsApp *</Label>
                         <Input id="phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} required placeholder="(11) 99999-0000" />
                       </div>
+                    </div>
+                    <div className="flex items-center justify-between rounded-xl border border-border p-4">
+                      <div>
+                        <p className="font-medium text-sm text-foreground">WhatsApp só para assinantes Premium</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Clientes precisam ser assinantes Premium para ver seu número</p>
+                      </div>
+                      <Switch checked={form.phonePremiumOnly} onCheckedChange={(v) => update("phonePremiumOnly", v)} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>

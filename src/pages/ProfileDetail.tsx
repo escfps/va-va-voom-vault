@@ -16,7 +16,7 @@ import {
   Home, Users, Clock, Camera, Eye,
   User, MessageSquare, ChevronDown, ChevronUp, ShieldCheck, Video,
   DollarSign, Banknote, CreditCard, Smartphone, Pencil, Send, Loader2,
-  ChevronLeft, ChevronRight, X,
+  ChevronLeft, ChevronRight, X, Lock,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -50,6 +50,21 @@ const ProfileDetail = () => {
     queryKey: ["profiles"],
     queryFn: fetchProfiles,
   });
+
+  // Verifica se o visitante tem plano premium ativo
+  const { data: visitorPlan } = useQuery({
+    queryKey: ["visitorPlan", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await (supabase.from("user_profiles" as any).select("visitor_plan, visitor_plan_expires_at").eq("user_id", user.id).maybeSingle()) as any;
+      return data as { visitor_plan: string; visitor_plan_expires_at: string | null } | null;
+    },
+    enabled: !!user,
+  });
+
+  const isVisitorPremium = !!user && !!visitorPlan &&
+    visitorPlan.visitor_plan !== "free" &&
+    (!visitorPlan.visitor_plan_expires_at || new Date(visitorPlan.visitor_plan_expires_at) > new Date());
 
   // Reviews do banco
   const { data: dbReviews = [], isLoading: reviewsLoading } = useQuery({
@@ -360,15 +375,33 @@ const ProfileDetail = () => {
 
           {/* WhatsApp CTA */}
           <div className="mt-6">
-            <a
-              href={`https://wa.me/55${profile.phone?.replace(/\D/g, "")}?text=${encodeURIComponent("Oi, tudo bem? Vim pelo site xmodelprive.com, gostei do seu perfil e queria marcar um horário. Pode me passar sua disponibilidade?")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button size="lg" className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white gap-2 text-base px-8">
-                <MessageCircle className="h-5 w-5" /> Chamar no WhatsApp
-              </Button>
-            </a>
+            {profile.phonePremiumOnly && !isVisitorPremium ? (
+              <div className="flex flex-col gap-3">
+                <Button
+                  size="lg"
+                  className="w-full md:w-auto gap-2 text-base px-8 bg-muted text-muted-foreground cursor-not-allowed"
+                  disabled
+                >
+                  <Lock className="h-5 w-5" /> WhatsApp exclusivo para Premium
+                </Button>
+                <p className="text-sm text-muted-foreground">
+                  Assine o plano Premium para ver o WhatsApp desta acompanhante.{" "}
+                  <a href="/planos-cliente" className="text-primary underline font-medium">
+                    Ver planos a partir de R$5/mês →
+                  </a>
+                </p>
+              </div>
+            ) : (
+              <a
+                href={`https://wa.me/55${profile.phone?.replace(/\D/g, "")}?text=${encodeURIComponent("Oi, tudo bem? Vim pelo site xmodelprive.com, gostei do seu perfil e queria marcar um horário. Pode me passar sua disponibilidade?")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button size="lg" className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white gap-2 text-base px-8">
+                  <MessageCircle className="h-5 w-5" /> Chamar no WhatsApp
+                </Button>
+              </a>
+            )}
           </div>
 
           {/* Tabs */}
@@ -839,15 +872,23 @@ const ProfileDetail = () => {
 
         {/* Floating WhatsApp mobile */}
         <div className="fixed bottom-6 left-4 right-4 md:hidden z-40">
-          <a
-            href={`https://wa.me/55${profile.phone?.replace(/\D/g, "")}?text=${encodeURIComponent("Oi, tudo bem? Vim pelo site xmodelprive.com, gostei do seu perfil e queria marcar um horário. Pode me passar sua disponibilidade?")}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 shadow-xl">
-              <MessageCircle className="h-5 w-5" /> Chamar no WhatsApp
-            </Button>
-          </a>
+          {profile.phonePremiumOnly && !isVisitorPremium ? (
+            <a href="/planos-cliente">
+              <Button size="lg" className="w-full gap-2 shadow-xl" style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" }}>
+                <Lock className="h-5 w-5" /> Ver WhatsApp · Premium a partir de R$5
+              </Button>
+            </a>
+          ) : (
+            <a
+              href={`https://wa.me/55${profile.phone?.replace(/\D/g, "")}?text=${encodeURIComponent("Oi, tudo bem? Vim pelo site xmodelprive.com, gostei do seu perfil e queria marcar um horário. Pode me passar sua disponibilidade?")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 shadow-xl">
+                <MessageCircle className="h-5 w-5" /> Chamar no WhatsApp
+              </Button>
+            </a>
+          )}
         </div>
 
         {/* Lightbox */}
