@@ -13,6 +13,7 @@ interface ProfileCardProps {
   city: string;
   image: string;
   price: number;
+  pricing?: { duration: string; price: number | null }[];
   verified: boolean;
   rating: number;
   tags?: string[];
@@ -33,6 +34,7 @@ const ProfileCard = ({
   city,
   image,
   price,
+  pricing = [],
   verified,
   rating,
   tags = [],
@@ -47,6 +49,11 @@ const ProfileCard = ({
   const isMonthly = plan === "monthly";
   const hasBonus = !!referralBonusUntil && new Date(referralBonusUntil) > new Date();
   const nivel = getNivel(viewCount, referralCount);
+
+  // Menor preço da tabela de preços
+  const cheapest = pricing.length > 0
+    ? pricing.filter(p => p.price !== null && p.price > 0).sort((a, b) => (a.price ?? 0) - (b.price ?? 0))[0]
+    : null;
   const wrapperClass = "relative group block bg-card rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1";
 
   const card = (
@@ -152,7 +159,14 @@ const ProfileCard = ({
       <div className="p-4">
         <div className="flex items-center justify-between">
           <span className="text-lg font-bold text-primary">
-            R$ {price.toLocaleString("pt-BR")}
+            {cheapest ? (
+              <div className="flex flex-col leading-tight">
+                <span className="text-xs text-muted-foreground font-normal">A partir de</span>
+                <span>R$ {cheapest.price!.toLocaleString("pt-BR")} <span className="text-sm font-normal text-muted-foreground">· {cheapest.duration}</span></span>
+              </div>
+            ) : (
+              <>R$ {price.toLocaleString("pt-BR")}</>
+            )}
           </span>
           <span className="flex items-center gap-1 text-sm text-muted-foreground">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />

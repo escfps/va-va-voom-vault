@@ -303,12 +303,45 @@ const ProfileDetail = () => {
               <h3 className="text-sm font-semibold text-primary mb-1 flex items-center gap-2">
                 <Clock className="h-4 w-4" /> Valores
               </h3>
-              <p className="text-xs text-muted-foreground">a partir de</p>
-              <p className="text-3xl font-bold text-foreground mt-1">R$ {profile.price.toLocaleString("pt-BR")}</p>
-              <p className="text-sm text-muted-foreground">({profile.priceDuration})</p>
-              <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-                <Users className="h-3 w-3" /> Atende: {profile.attendsTo}
-              </p>
+              {(() => {
+                const validPricing = (profile.pricing ?? []).filter(p => p.price !== null && p.price > 0);
+                const cheapest = validPricing.sort((a, b) => (a.price ?? 0) - (b.price ?? 0))[0];
+                const [pricingOpen, setPricingOpen] = [expandedService === "pricing", (v: boolean) => setExpandedService(v ? "pricing" : null)];
+                return (
+                  <>
+                    <p className="text-xs text-muted-foreground">a partir de</p>
+                    <p className="text-3xl font-bold text-foreground mt-1">
+                      R$ {(cheapest?.price ?? profile.price).toLocaleString("pt-BR")}
+                    </p>
+                    <p className="text-sm text-muted-foreground">({cheapest?.duration ?? profile.priceDuration})</p>
+
+                    {validPricing.length > 1 && (
+                      <button
+                        onClick={() => setPricingOpen(!pricingOpen)}
+                        className="flex items-center gap-1 text-xs text-primary mt-2 hover:underline"
+                      >
+                        {pricingOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        {pricingOpen ? "Ocultar valores" : "Ver todos os valores"}
+                      </button>
+                    )}
+
+                    {pricingOpen && (
+                      <div className="mt-3 space-y-1 border-t border-border pt-3">
+                        {validPricing.map((item, i) => (
+                          <div key={i} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{item.duration}</span>
+                            <span className="font-semibold text-foreground">R$ {item.price!.toLocaleString("pt-BR")}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
+                      <Users className="h-3 w-3" /> Atende: {profile.attendsTo}
+                    </p>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Location */}

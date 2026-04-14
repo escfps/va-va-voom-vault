@@ -98,7 +98,7 @@ function hasActiveBonus(profile: any): boolean {
 const LISTING_FIELDS = [
   "id", "name", "age", "city", "state", "tagline", "image", "images", "cover_image",
   "price", "price_duration", "plan", "verified", "verified_date",
-  "rating", "review_count", "tags", "gender",
+  "rating", "review_count", "tags", "gender", "pricing",
   "is_active", "status", "user_id", "created_at", "view_count", "referral_count",
 ].join(", ");
 
