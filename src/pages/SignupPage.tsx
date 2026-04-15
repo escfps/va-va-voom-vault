@@ -27,8 +27,11 @@ const SignupPage = () => {
   const [saving, setSaving]     = useState(false);
 
   // Se já logado, vai direto para a escolha (ou conta-cliente se já completou)
+  // Só roda uma vez — não sobrescreve se usuário já avançou no fluxo
   useEffect(() => {
     if (authLoading || !user) return;
+    // Se já passou do register, não interfere
+    if (step !== "register") return;
     (async () => {
       const { data } = await (supabase
         .from("user_profiles" as any)
