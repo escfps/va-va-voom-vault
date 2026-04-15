@@ -465,24 +465,6 @@ const RegisterPage = () => {
                 {/* ── Step 0: Seleção de tipos (multi-select) ── */}
                 {step === 0 && (
                   <div className="space-y-4">
-                    {/* Tabs Acompanhante / Cliente */}
-                    <div className="flex rounded-xl border border-border overflow-hidden mb-2">
-                      <button
-                        type="button"
-                        className="flex-1 py-2.5 text-sm font-semibold transition-colors bg-primary text-primary-foreground"
-                        disabled
-                      >
-                        Sou acompanhante
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/cadastro-usuario")}
-                        className="flex-1 py-2.5 text-sm font-medium transition-colors bg-background text-muted-foreground hover:bg-muted"
-                      >
-                        Sou cliente
-                      </button>
-                    </div>
-
                     <p className="text-sm text-muted-foreground text-center">
                       Você pode selecionar mais de uma categoria na mesma conta.
                     </p>

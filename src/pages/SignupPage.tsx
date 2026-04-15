@@ -7,148 +7,125 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Heart, User } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 
-// step 0 = criar conta (só se não logado)
-// step 1 = preencher nome + whatsapp
-// step 2 = planos (redireciona)
+// step: "register" | "choose" | "client-profile"
+// Se já logado → pula direto pra "choose" (ou conta-cliente se já completou)
 
 const SignupPage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
-  const [step, setStep] = useState(0);
-
-  // Dados step 0
-  const [email, setEmail] = useState("");
+  const [step, setStep] = useState<"register" | "choose" | "client-profile">("register");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [loadingSignup, setLoadingSignup] = useState(false);
+  const [loadingAuth, setLoadingAuth] = useState(false);
 
-  // Dados step 1
-  const [nome, setNome] = useState("");
+  const [nome, setNome]         = useState("");
   const [whatsapp, setWhatsapp] = useState("");
-  const [savingProfile, setSavingProfile] = useState(false);
+  const [saving, setSaving]     = useState(false);
 
-  // Se já está logado, verifica se já tem perfil completo
+  // Se já logado, vai direto para a escolha (ou conta-cliente se já completou)
   useEffect(() => {
     if (authLoading || !user) return;
-
     (async () => {
       const { data } = await (supabase
         .from("user_profiles" as any)
-        .select("display_name, visitor_plan, visitor_plan_expires_at")
+        .select("display_name")
         .eq("user_id", user.id)
         .maybeSingle()) as any;
-
-      if ((data as any)?.display_name) {
-        // Já tem perfil → vai para a página de conta do cliente
+      const hasName = data?.display_name && !data.display_name.includes("@");
+      if (hasName) {
         navigate("/conta-cliente");
       } else {
-        // Não tem perfil ainda → pede nome + whatsapp
-        setStep(1);
+        setStep("choose");
       }
     })();
   }, [user, authLoading]);
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoadingSignup(true);
+    setLoadingAuth(true);
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
+      email, password,
       options: { emailRedirectTo: window.location.origin },
     });
     if (error) {
       toast.error(error.message);
-    } else {
-      // Aguarda o user ser setado via onAuthStateChange e avança
-      setStep(1);
+      setLoadingAuth(false);
+      return;
     }
-    setLoadingSignup(false);
+    // user vai ser setado pelo onAuthStateChange → useEffect leva pro "choose"
+    setLoadingAuth(false);
   };
 
   const handleOAuth = async (provider: "google" | "apple") => {
     const result = await lovable.auth.signInWithOAuth(provider, {
       redirect_uri: `${window.location.origin}/cadastro-usuario`,
     });
-    if (result.error) {
-      toast.error("Erro ao fazer login com " + provider);
+    if (result.error) toast.error("Erro ao fazer login com " + provider);
+  };
+
+  const handleChoose = (type: "acompanhante" | "cliente") => {
+    if (type === "acompanhante") {
+      navigate("/cadastro?tipo=acompanhante");
+    } else {
+      setStep("client-profile");
     }
   };
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
+  const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nome.trim()) { toast.error("Informe seu nome."); return; }
+    if (!nome.trim())    { toast.error("Informe seu nome.");     return; }
     if (!whatsapp.trim()) { toast.error("Informe seu WhatsApp."); return; }
-
-    setSavingProfile(true);
+    setSaving(true);
     try {
-      const uid = user?.id;
-      if (uid) {
-        await (supabase.from("user_profiles" as any).upsert(
-          { user_id: uid, display_name: nome.trim(), bio: whatsapp.trim(), visitor_plan: "free", ...({ email: user?.email } as any) },
-          { onConflict: "user_id" }
-        ));
-      }
+      await (supabase.from("user_profiles" as any).upsert(
+        { user_id: user!.id, display_name: nome.trim(), bio: whatsapp.trim(), visitor_plan: "free", ...({ email: user?.email } as any) },
+        { onConflict: "user_id" }
+      ));
       navigate("/planos-cliente");
     } catch (err: any) {
-      toast.error("Erro ao salvar: " + err.message);
+      toast.error("Erro: " + err.message);
     } finally {
-      setSavingProfile(false);
+      setSaving(false);
     }
   };
-
-  const Tabs = () => (
-    <div className="flex rounded-xl border border-border overflow-hidden">
-      <button
-        type="button"
-        onClick={() => navigate("/cadastro")}
-        className="flex-1 py-2.5 text-sm font-medium transition-colors bg-background text-muted-foreground hover:bg-muted"
-      >
-        Sou acompanhante
-      </button>
-      <button
-        type="button"
-        className="flex-1 py-2.5 text-sm font-semibold transition-colors bg-primary text-primary-foreground cursor-default"
-      >
-        Sou cliente
-      </button>
-    </div>
-  );
 
   if (authLoading) return null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-6">
+
+        {/* Logo */}
         <div className="text-center">
-          <Link to="/">
-            <img src={logoImg} alt="X Model Privé" className="h-12 mx-auto mb-4" />
-          </Link>
+          <Link to="/"><img src={logoImg} alt="X Model Privé" className="h-12 mx-auto mb-4" /></Link>
           <h1 className="text-2xl font-bold text-foreground">
-            {step === 0 ? "Criar conta" : "Seus dados"}
+            {step === "register"       ? "Criar conta"
+            : step === "choose"        ? "Como você quer usar a plataforma?"
+            : "Complete seu cadastro"}
           </h1>
-          {step === 1 && (
-            <p className="text-muted-foreground text-sm mt-1">Quase lá! Complete seu perfil.</p>
+          {step === "choose" && (
+            <p className="text-sm text-muted-foreground mt-1">Escolha uma opção para continuar</p>
           )}
         </div>
 
-        <Tabs />
-
-        {/* ── Step 0: Criar conta ── */}
-        {step === 0 && (
+        {/* ── STEP: register ── */}
+        {step === "register" && (
           <>
-            <form onSubmit={handleSignup} className="space-y-4">
+            <form onSubmit={handleAuth} className="space-y-4">
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="seu@email.com" />
+                <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="seu@email.com" />
               </div>
               <div>
                 <Label htmlFor="password">Senha</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Mínimo 6 caracteres" minLength={6} />
+                <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="Mínimo 6 caracteres" minLength={6} />
               </div>
-              <Button type="submit" className="w-full" disabled={loadingSignup}>
-                {loadingSignup ? "Criando conta..." : "Criar conta"}
+              <Button type="submit" className="w-full" disabled={loadingAuth}>
+                {loadingAuth ? "Criando conta..." : "Criar conta"}
               </Button>
             </form>
 
@@ -175,34 +152,61 @@ const SignupPage = () => {
           </>
         )}
 
-        {/* ── Step 1: Nome + WhatsApp ── */}
-        {step === 1 && (
-          <form onSubmit={handleSaveProfile} className="space-y-4">
+        {/* ── STEP: choose ── */}
+        {step === "choose" && (
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => handleChoose("cliente")}
+              className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all group text-left"
+            >
+              <div className="p-3 rounded-full bg-muted group-hover:bg-primary/10 transition-colors shrink-0">
+                <User className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground">Sou cliente</p>
+                <p className="text-sm text-muted-foreground mt-0.5">Explore perfis e encontre acompanhantes.</p>
+              </div>
+              <span className="text-muted-foreground group-hover:text-primary text-xl">›</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleChoose("acompanhante")}
+              className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all group text-left"
+            >
+              <div className="p-3 rounded-full bg-primary/10 shrink-0">
+                <Heart className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-primary">Sou acompanhante</p>
+                <p className="text-sm text-muted-foreground mt-0.5">Crie seu perfil e divulgue seus serviços.</p>
+              </div>
+              <span className="text-muted-foreground group-hover:text-primary text-xl">›</span>
+            </button>
+          </div>
+        )}
+
+        {/* ── STEP: client-profile ── */}
+        {step === "client-profile" && (
+          <form onSubmit={handleSaveClient} className="space-y-4">
             <div>
               <Label htmlFor="nome">Seu nome</Label>
-              <Input
-                id="nome"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                required
-                placeholder="Como quer ser chamado(a)"
-              />
+              <Input id="nome" value={nome} onChange={e => setNome(e.target.value)} required placeholder="Como quer ser chamado(a)" autoFocus />
             </div>
             <div>
               <Label htmlFor="whatsapp">Seu WhatsApp</Label>
-              <Input
-                id="whatsapp"
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                required
-                placeholder="(54) 99999-0000"
-              />
+              <Input id="whatsapp" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} required placeholder="(54) 99999-0000" />
             </div>
-            <Button type="submit" className="w-full" disabled={savingProfile}>
-              {savingProfile ? "Salvando..." : "Continuar para planos →"}
+            <Button type="submit" className="w-full" disabled={saving}>
+              {saving ? "Salvando..." : "Continuar para planos →"}
             </Button>
+            <button type="button" onClick={() => setStep("choose")} className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+              ← Voltar
+            </button>
           </form>
         )}
+
       </div>
     </div>
   );

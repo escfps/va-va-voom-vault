@@ -20,6 +20,11 @@ const ContaClientePage = () => {
       .eq("user_id", user.id)
       .maybeSingle()
     ).then(({ data }: any) => {
+      if (!data?.display_name) {
+        // Perfil incompleto → volta para completar cadastro
+        navigate("/cadastro-usuario");
+        return;
+      }
       setProfile(data);
       setLoading(false);
     });

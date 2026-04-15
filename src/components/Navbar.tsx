@@ -505,10 +505,17 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Mobile hamburger */}
-            <button className="md:hidden p-2" onClick={() => setIsOpen(!isOpen)}>
-              {isOpen ? <XIcon className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+            {/* Mobile: botão cadastro visível + hambúrguer */}
+            <div className="md:hidden flex items-center gap-2">
+              {!user && (
+                <Button size="sm" className="gap-1.5 text-xs px-3" onClick={() => setShowSignup(true)}>
+                  <User className="h-3.5 w-3.5" /> Cadastre-se
+                </Button>
+              )}
+              <button className="p-2" onClick={() => setIsOpen(!isOpen)}>
+                {isOpen ? <XIcon className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
 
           {/* Mobile menu */}
@@ -659,22 +666,8 @@ const Navbar = () => {
                 <UserCheck className="h-5 w-5 text-foreground" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-foreground">Quero ser cliente</p>
-                <p className="text-sm text-muted-foreground">Encontre as melhores acompanhantes disponíveis para você.</p>
-              </div>
-              <span className="text-muted-foreground group-hover:text-primary transition-colors text-xl">›</span>
-            </Link>
-            <Link
-              to="/cadastro?tipo=acompanhante"
-              onClick={() => setShowSignup(false)}
-              className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-muted transition-all group"
-            >
-              <div className="p-2.5 rounded-full bg-primary/10">
-                <Heart className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-primary">Sou acompanhante</p>
-                <p className="text-sm text-muted-foreground">Divulgue seus serviços para milhares de clientes.</p>
+                <p className="font-semibold text-foreground">Criar conta</p>
+                <p className="text-sm text-muted-foreground">Cadastre-se como cliente ou acompanhante.</p>
               </div>
               <span className="text-muted-foreground group-hover:text-primary transition-colors text-xl">›</span>
             </Link>
