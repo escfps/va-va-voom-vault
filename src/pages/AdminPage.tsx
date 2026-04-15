@@ -88,6 +88,13 @@ const AdminPage = () => {
     fetchVisitors();
   };
 
+  const handleDeleteVisitor = async (userId: string, name: string) => {
+    if (!window.confirm(`Excluir o cliente "${name}"? Esta ação não pode ser desfeita.`)) return;
+    await (supabase.from("user_profiles" as any).delete().eq("user_id", userId));
+    toast.success("Cliente removido.");
+    fetchVisitors();
+  };
+
   // Edição rápida
   const [quickEditProfile, setQuickEditProfile] = useState<any | null>(null);
   const [quickEditSaving, setQuickEditSaving] = useState(false); // usado no modal
@@ -674,6 +681,9 @@ const AdminPage = () => {
                           ) : (
                             <Button size="sm" variant="outline" className="text-xs h-7 px-2" onClick={() => handleRevokeVisitorPlan(v.user_id)}>Revogar</Button>
                           )}
+                          <Button size="sm" variant="destructive" className="text-xs h-7 px-2" onClick={() => handleDeleteVisitor(v.user_id, v.display_name || v.email || "cliente")}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     );

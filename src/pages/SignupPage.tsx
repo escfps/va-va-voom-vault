@@ -42,6 +42,11 @@ const SignupPage = () => {
       if (hasName) {
         navigate("/conta-cliente");
       } else {
+        // Garante registro no admin mesmo sem nome
+        await (supabase.from("user_profiles" as any).upsert(
+          { user_id: user.id, visitor_plan: "free", ...({ email: user.email } as any) },
+          { onConflict: "user_id" }
+        ));
         setStep("choose");
       }
     })();
@@ -50,7 +55,7 @@ const SignupPage = () => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoadingAuth(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email, password,
       options: { emailRedirectTo: window.location.origin },
     });
@@ -59,8 +64,15 @@ const SignupPage = () => {
       setLoadingAuth(false);
       return;
     }
-    // user vai ser setado pelo onAuthStateChange → useEffect leva pro "choose"
+    // Cria registro no admin imediatamente (mesmo sem nome/whatsapp ainda)
+    if (data.user) {
+      await (supabase.from("user_profiles" as any).upsert(
+        { user_id: data.user.id, visitor_plan: "free", ...({ email } as any) },
+        { onConflict: "user_id" }
+      ));
+    }
     setLoadingAuth(false);
+    setStep("choose");
   };
 
   const handleOAuth = async (provider: "google" | "apple") => {
